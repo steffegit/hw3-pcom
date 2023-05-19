@@ -19,7 +19,8 @@ TEST_PASSWORD = "test123"
 EXPECT_TIMEOUT = 1  # 1 second should be enough...
 TEXT_INDENT = "    "
 
-RE_SUCCESS = r"[Ss]uccess?"
+RE_SUCCESS = r"^.*([Ss]uccess?|OK|[Oo]kay).*$"
+RE_ERROR = r"^.*([Ee]rror|[Ff]ail|[Ee]suat).*$"
 # JSON parsing using RegExp: don't do this at home!
 RE_BOOK_ID = r"id\s*=\s*([0-9]+)|\"id\"\s*:\s*\"?([0-9]+)"
 RE_EXTRACT_FIELD = r"%s\s*=\s*(.+)\s*|\"%s\"\s*:\s*(?:\"([^\"]+)|([0-9]+))"
@@ -28,12 +29,8 @@ RE_EXTRACT_FIELD = r"%s\s*=\s*(.+)\s*|\"%s\"\s*:\s*(?:\"([^\"]+)|([0-9]+))"
 # classes used
 class CheckerException(Exception): pass
 
-def wrap_test_output(res, indent=TEXT_INDENT):
-    if res == pexpect.TIMEOUT:
-        res = "<no output>"
-    if res == pexpect.EOF:
-        res = "<EOF>"
-    return textwrap.indent(res, prefix=indent)
+def wrap_test_output(text, indent=TEXT_INDENT):
+    return textwrap.indent(text, prefix=indent)
 
 def color_print(text, fg="white", bg=None, style="normal", stderr=False, newline=True):
     """ Forgive this mess... but it's better than extra dependencies ;) """
@@ -75,6 +72,18 @@ def expect_send_params(p, xvars):
         p.sendline(str(xvars.get(keys[idx])))
         xseen.add(keys[idx])
 
+def expect_print_output(p):
+    res = p.expect([RE_SUCCESS, RE_ERROR, pexpect.TIMEOUT])
+    color_args = {}
+    text = p.after
+    if res == 0:
+        color_args = {"fg": "green"}
+    elif res == 1:
+        color_args = {"fg": "red"}
+    else:
+        text = p.before or "<no output>"
+    color_print(wrap_test_output(text.strip()), **color_args)
+
 def extract_book_ids(output):
     matches = re.findall(RE_BOOK_ID, output)
     return [val[0] or val[1] for val in matches]
@@ -87,20 +96,17 @@ def do_register(p, xargs):
     normalize_user(xargs)
     p.sendline("register")
     expect_send_params(p, xargs["user"])
-    p.expect([RE_SUCCESS, pexpect.TIMEOUT])
-    color_print(wrap_test_output(p.after))
+    expect_print_output(p)
 
 def do_login(p, xargs):
     normalize_user(xargs)
     p.sendline("login")
     expect_send_params(p, xargs["user"])
-    p.expect([RE_SUCCESS, pexpect.TIMEOUT])
-    color_print(wrap_test_output(p.after))
+    expect_print_output(p)
 
 def do_enter(p, xargs):
     p.sendline("enter_library")
-    p.expect([RE_SUCCESS, pexpect.TIMEOUT])
-    color_print(wrap_test_output(p.after))
+    expect_print_output(p)
 
 def do_get_books(p, xargs):
     p.sendline("get_books")
@@ -125,7 +131,7 @@ def do_add_book(p, xargs):
     p.sendline("add_book")
     book_struct = { key : book.get(key, "") for key in ("title", "author", "genre", "publisher", "page_count") }
     expect_send_params(p, book_struct)
-    p.expect([RE_SUCCESS, pexpect.TIMEOUT])
+    expect_print_output(p)
 
 def do_get_book_id(p, xargs):
     p.sendline("get_book")
@@ -137,7 +143,7 @@ def do_get_book_id(p, xargs):
         raise CheckerException("No book index: %s" % str(idx))
     book_id = book_ids[idx]
     expect_send_params(p, {"id": book_id})
-    p.expect([RE_SUCCESS, pexpect.TIMEOUT])
+    p.expect(pexpect.TIMEOUT)
     expect_book = xargs.get("expect_book", False)
     if type(expect_book) is dict:
         for field in expect_book.keys():
@@ -161,11 +167,11 @@ def do_delete_book(p, xargs):
         raise CheckerException("No book index: %s" % str(idx))
     book_id = book_ids[idx]
     expect_send_params(p, {"id": book_id})
-    p.expect([RE_SUCCESS, pexpect.TIMEOUT])
+    expect_print_output(p)
 
 def do_logout(p, xargs):
     p.sendline("logout")
-    p.expect([RE_SUCCESS, pexpect.TIMEOUT])
+    expect_print_output(p)
 
 def do_exit(p, xargs):
     p.sendline("exit")
@@ -229,10 +235,10 @@ def run_tasks(p, args):
             ACTIONS[action](p, xargs)
         except CheckerException as ex:
             ex = CheckerException("%s: %s" % (action, str(ex)))
-            color_print("ERROR:", fg="black", bg="red", stderr=True, newline=False)
-            color_print(" " + str(ex), fg="red", stderr=True)
+            color_print(wrap_test_output("ERROR:"), fg="black", bg="red", stderr=True, newline=False)
+            color_print(wrap_test_output(str(ex)), fg="red", stderr=True)
             if args.debug:
-                color_print(traceback.format_exc(), fg="red", stderr=True)
+                color_print(wrap_test_output(traceback.format_exc()), fg="red", stderr=True)
             if not ignore:
                 break
     
