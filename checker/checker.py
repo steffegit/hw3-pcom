@@ -6,15 +6,18 @@ Dependencies: pexpect
 """
 
 import sys
+import traceback
 from collections import namedtuple
 import argparse
 import re
+import textwrap
 
 import pexpect
 
 TEST_USERNAME = "test"
 TEST_PASSWORD = "test123"
 EXPECT_TIMEOUT = 1  # 1 second should be enough...
+TEXT_INDENT = "    "
 
 RE_SUCCESS = r"[Ss]uccess?"
 # JSON parsing using RegExp: don't do this at home!
@@ -25,14 +28,35 @@ RE_EXTRACT_FIELD = r"%s\s*=\s*(.+)\s*|\"%s\"\s*:\s*(?:\"([^\"]+)|([0-9]+))"
 # classes used
 class CheckerException(Exception): pass
 
+def wrap_test_output(res, indent=TEXT_INDENT):
+    if res == pexpect.TIMEOUT:
+        res = "<no output>"
+    if res == pexpect.EOF:
+        res = "<EOF>"
+    return textwrap.indent(res, prefix=indent)
+
+def color_print(text, fg="white", bg=None, style="normal", stderr=False, newline=True):
+    """ Forgive this mess... but it's better than extra dependencies ;) """
+    COLORS = ["black", "red", "green", "yellow", "blue", "purple", "cyan", "white"]
+    STYLES = ["normal", "bold", "light", "italic", "underline", "blink"]
+    fg = str(30 + COLORS.index(fg.lower()))
+    bg = ("" if not bg else ";" + str(40 + COLORS.index(bg.lower())))
+    style = str(STYLES.index(style.lower()))
+    text = '\033[{style};{fg}{bg}m{text}\033[0;0m'.format(text=text, fg=fg, bg=bg, style=style)
+    if stderr:
+        sys.stderr.write(text + ("\n" if newline else ""))
+    else:
+        sys.stdout.write(text + ("\n" if newline else ""))
+
 class ExpectInputWrapper:
     """ Utility IO class used for prefixing the debug output. """
-    def __init__(self, prefix):
-        self.prefix = prefix
+    def __init__(self, direction=False):
+        self._dir = direction
     def write(self, s):
-        print("%s%s" % (self.prefix, s.strip()))
+        prefix = "  > " if self._dir else "  < "
+        color_print(wrap_test_output(s.strip(), indent=prefix),
+                    fg="white", style="italic")
     def flush(self): pass
-
 
 def normalize_user(xargs):
     user = xargs.get("user")
@@ -64,37 +88,39 @@ def do_register(p, xargs):
     p.sendline("register")
     expect_send_params(p, xargs["user"])
     p.expect([RE_SUCCESS, pexpect.TIMEOUT])
-    print(p.after)
+    color_print(wrap_test_output(p.after))
 
 def do_login(p, xargs):
     normalize_user(xargs)
     p.sendline("login")
     expect_send_params(p, xargs["user"])
     p.expect([RE_SUCCESS, pexpect.TIMEOUT])
-    print(p.after)
+    color_print(wrap_test_output(p.after))
 
 def do_enter(p, xargs):
     p.sendline("enter_library")
     p.expect([RE_SUCCESS, pexpect.TIMEOUT])
-    print(p.after)
+    color_print(wrap_test_output(p.after))
 
 def do_get_books(p, xargs):
     p.sendline("get_books")
     p.expect(pexpect.TIMEOUT)
     xargs["book_ids"] = extract_book_ids(p.before)
     xargs["book_titles"] = extract_book_fields(p.before, "title")
-    print("Retrieved book IDs + titles:", xargs["book_ids"], xargs["book_titles"])
+    print(wrap_test_output("Retrieved book IDs + titles: \n" +
+                                 str(xargs["book_ids"]) + "\n" + str(xargs["book_titles"])))
     expect_count = xargs.get("expect_count", False)
     if type(expect_count) is int:
         if len(xargs["book_ids"]) != expect_count:
             raise CheckerException("Book count mismatch: %s != %s" % 
                                    (len(xargs["book_ids"]), expect_count))
+        color_print(wrap_test_output("OKAY: count=%i" % expect_count), fg="green", style="bold")
 
 def do_add_book(p, xargs):
     book_titles = xargs.get("book_titles", [])
     book = xargs.get("book", {})
     if book["title"] in book_titles:
-        print("SKIP: book already added!")
+        color_print(wrap_test_output("SKIP: book already added!"), fg="yellow")
         return
     p.sendline("add_book")
     book_struct = { key : book.get(key, "") for key in ("title", "author", "genre", "publisher", "page_count") }
@@ -122,7 +148,8 @@ def do_get_book_id(p, xargs):
                 raise CheckerException("Multiple '%s' fields found in output!" % field)
             if str(values[0]) != str(expect_book[field]):
                 raise CheckerException("Book field '%s' mismatch: %s != %s" % 
-                                    (field, values[0], expect_book[field]))
+                                       (field, values[0], expect_book[field]))
+        color_print(wrap_test_output("OKAY: fields match!"), fg="green", style="bold")
 
 def do_delete_book(p, xargs):
     p.sendline("delete_book")
@@ -194,18 +221,20 @@ def run_tasks(p, args):
     xargs = dict(vars(args))
     for action, params in script:
         params = dict(params)  # copy the original dict
-        ignore = params.pop("ignore", False)
+        ignore = params.pop("ignore", args.ignore)
         if params:
             xargs.update(params)
         try:
-            print("%s: " % (action,))
+            color_print("%s: " % (action,), fg="cyan", style="bold")
             ACTIONS[action](p, xargs)
         except CheckerException as ex:
             ex = CheckerException("%s: %s" % (action, str(ex)))
-            sys.stderr.write(str(ex) + "\n")
-            if ignore:
-                continue
-            raise ex
+            color_print("ERROR:", fg="black", bg="red", stderr=True, newline=False)
+            color_print(" " + str(ex), fg="red", stderr=True)
+            if args.debug:
+                color_print(traceback.format_exc(), fg="red", stderr=True)
+            if not ignore:
+                break
     
 
 if __name__ == "__main__":
@@ -216,11 +245,19 @@ if __name__ == "__main__":
     parser.add_argument('-u', '--user', help="Override username & password " \
             "(separated by colon, e.g. `-u user:pass`")
     parser.add_argument('-d', '--debug', help="Enable debug output", action="store_true")
+    parser.add_argument('-i', '--ignore', help="Ignore errors (do not break the tests)", action="store_true")
 
     args = parser.parse_args()
     p = pexpect.spawn(args.program, encoding='utf-8', echo=False, timeout=EXPECT_TIMEOUT)
     if args.debug:
-        p.logfile_send = ExpectInputWrapper("  > ")
-        p.logfile_read = ExpectInputWrapper("  < ")
-    run_tasks(p, args)
+        p.logfile_send = ExpectInputWrapper(direction=True)
+        p.logfile_read = ExpectInputWrapper(direction=False)
+
+    try:
+        run_tasks(p, args)
+    except Exception as ex:
+        color_print("FATAL ERROR:", fg="black", bg="red", stderr=True, newline=False)
+        color_print(" " + str(ex), fg="red", stderr=True)
+        if args.debug:
+            color_print(traceback.format_exc(), fg="red", stderr=True)
 
