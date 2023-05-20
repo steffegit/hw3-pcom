@@ -22,8 +22,8 @@ TEXT_INDENT = "    "
 RE_SUCCESS = re.compile(r"^.*((?:^|\W)succ?ess?|(?:^|\W)ok(?:$|\W)|(?:^|\W)okay).*$", re.IGNORECASE)
 RE_ERROR = re.compile(r"^.*((?:^|\W)err?oa?r|(?:^|\W)fail|(?:^|\W)esuat).*$", re.IGNORECASE)
 # JSON parsing using RegExp: don't do this at home!
-RE_BOOK_ID = r"id[ \t\f\v]*=[ \t\f\v]*([0-9]+)|\"id\"\s*:\s*\"?([0-9]+)"
-RE_EXTRACT_FIELD = r"%s[ \t\f\v]*=[ \t\f\v]*([^\r\n]+)\s*?|\"%s\"\s*:\s*(?:\"([^\"]+)|([0-9]+))"
+RE_BOOK_ID = r"id[ \t\f\v]*[=:][ \t\f\v]*([0-9]+)|\"id\"\s*:\s*\"?([0-9]+)"
+RE_EXTRACT_FIELD = r"%s[ \t\f\v]*[=:][ \t\f\v]*([^\r\n]+)\s*?|\"%s\"\s*:\s*(?:\"([^\"]+)|([0-9]+))"
 
 
 # classes used
