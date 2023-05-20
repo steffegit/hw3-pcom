@@ -193,6 +193,8 @@ def do_logout(p, xargs):
     expect_print_output(p)
 
 def do_exit(p, xargs):
+    if xargs.get("dont_exit", False):
+        return
     p.sendline("exit")
     p.expect(pexpect.EOF)
 
@@ -228,6 +230,8 @@ SAMPLE_BOOKS = [
 _book_test_fields = lambda idx: {key: SAMPLE_BOOKS[idx][key] for key in ("title", "author", "page_count")}
 
 SCRIPTS = {
+    "ALL": ["full", "delete_all", "add3", "read3", "delete_all",
+            "invalid_user", "invalid_book_fields", "invalid_book_pages", "delete_all"],
     "full": [
         ("register", {}),  # use CLI-provided user
         ("login", {}), ("enter_library", {}),
@@ -285,24 +289,38 @@ SCRIPTS = {
 }
 
 def run_tasks(p, args):
-    script_name = args.script or "full"
+    script_name = args.get("script", "full")
     if script_name not in SCRIPTS:
         raise CheckerException("Invalid script: %s" % (script_name))
     script = SCRIPTS[script_name]
-    xargs = dict(vars(args))
-    for action, params in script:
-        params = dict(params)  # copy the original dict
-        ignore = params.pop("ignore", args.ignore)
-        if params:
-            xargs.update(params)
+    xargs = dict(args)
+    for task in script:
+        ignore = xargs.get("ignore", False)
+        action = None
+        action_name = ""
+        print_style = {"fg": "cyan", "style": "bold"}
+        if isinstance(task, tuple):
+            action_name = task[0]
+            action = ACTIONS[action_name]
+            if task[1]:
+                xargs.update(task[1])
+            ignore = xargs.get("ignore", False)
+        elif isinstance(task, str):
+            action_name = "<RUN SUBTASK: %s>" % str(task)
+            print_style = {"fg": "black", "bg": "purple", "style": "bold"}
+            action = run_tasks
+            ignore = True
+            xargs = dict(args, script=task, dont_exit=True)
+        if not action:
+            continue
         try:
-            color_print("%s: " % (action,), fg="cyan", style="bold")
-            ACTIONS[action](p, xargs)
+            color_print("%s: " % action_name, **print_style)
+            action(p, xargs)
         except CheckerException as ex:
-            ex = CheckerException("%s: %s" % (action, str(ex)))
+            ex = CheckerException("%s: %s" % (action.__name__, str(ex)))
             color_print(wrap_test_output("ERROR:"), fg="black", bg="red", stderr=True, newline=False)
             color_print(wrap_test_output(str(ex)), fg="red", stderr=True)
-            if args.debug:
+            if args.get("debug"):
                 color_print(wrap_test_output(traceback.format_exc()), fg="red", stderr=True)
             if not ignore:
                 break
@@ -325,7 +343,7 @@ if __name__ == "__main__":
         p.logfile_read = ExpectInputWrapper(direction=False)
 
     try:
-        run_tasks(p, args)
+        run_tasks(p, vars(args))
     except Exception as ex:
         color_print("FATAL ERROR:", fg="black", bg="red", stderr=True, newline=False)
         color_print(" " + str(ex), fg="red", stderr=True)
