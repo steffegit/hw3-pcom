@@ -181,7 +181,7 @@ def do_delete_book(p, xargs):
 
 def do_delete_all_books(p, xargs):
     book_ids = xargs.get("book_ids")
-    if not book_ids:
+    if not book_ids and not xargs.get("delete_books_ignore", False):
         raise CheckerException("No books found!")
     for book_id in book_ids:
         p.sendline("delete_book")
@@ -264,7 +264,8 @@ SCRIPTS = {
     ],
     "delete_all": [
         ("login", {}), ("enter_library", {}),
-        ("get_books", {}), ("delete_all_books", {}),
+        ("get_books", {}), ("delete_all_books", {"delete_books_ignore": True}),
+        ("get_books", {"expect_count": 0}),
         ("logout", {}), ("exit", {}), 
     ],
 
