@@ -22,8 +22,8 @@ TEXT_INDENT = "    "
 RE_SUCCESS = r"^.*([Ss]uccess?|OK|[Oo]kay).*$"
 RE_ERROR = r"^.*([Ee]rror|[Ff]ail|[Ee]suat).*$"
 # JSON parsing using RegExp: don't do this at home!
-RE_BOOK_ID = r"id\s*=\s*([0-9]+)|\"id\"\s*:\s*\"?([0-9]+)"
-RE_EXTRACT_FIELD = r"%s\s*=\s*(.+)\s*|\"%s\"\s*:\s*(?:\"([^\"]+)|([0-9]+))"
+RE_BOOK_ID = r"id[ \t\f\v]*=[ \t\f\v]*([0-9]+)|\"id\"\s*:\s*\"?([0-9]+)"
+RE_EXTRACT_FIELD = r"%s[ \t\f\v]*=[ \t\f\v]*([^\r\n]+)\s*?|\"%s\"\s*:\s*(?:\"([^\"]+)|([0-9]+))"
 
 
 # classes used
@@ -65,12 +65,19 @@ def normalize_user(xargs):
 
 def expect_send_params(p, xvars):
     keys = list(xvars.keys())
-    xpatterns =  [(r"(" + kw + r")\s*=\s*") for kw in keys]
+    xpatterns =  [(r"(" + kw + r")[ \t\f\v]*=[ \t\f\v]*") for kw in keys]
     xseen = set()
     while xseen != set(keys):
         idx = p.expect(xpatterns)
         p.sendline(str(xvars.get(keys[idx])))
         xseen.add(keys[idx])
+
+def expect_flush_output(p):
+    i = p.expect([pexpect.TIMEOUT, pexpect.EOF])
+    buf = p.before
+    if i == 0 and p.before:
+        p.expect(r'.+')
+    return buf
 
 def expect_print_output(p):
     res = p.expect([RE_SUCCESS, RE_ERROR, pexpect.TIMEOUT])
@@ -82,6 +89,9 @@ def expect_print_output(p):
         color_args = {"fg": "red"}
     else:
         text = p.before or "<no output>"
+        if p.before:
+            p.expect(r'.+')
+            
     color_print(wrap_test_output(text.strip()), **color_args)
 
 def extract_book_ids(output):
@@ -110,9 +120,9 @@ def do_enter(p, xargs):
 
 def do_get_books(p, xargs):
     p.sendline("get_books")
-    p.expect(pexpect.TIMEOUT)
-    xargs["book_ids"] = extract_book_ids(p.before)
-    xargs["book_titles"] = extract_book_fields(p.before, "title")
+    buf = expect_flush_output(p)
+    xargs["book_ids"] = extract_book_ids(buf)
+    xargs["book_titles"] = extract_book_fields(buf, "title")
     print(wrap_test_output("Retrieved book IDs + titles: \n" +
                                  str(xargs["book_ids"]) + "\n" + str(xargs["book_titles"])))
     expect_count = xargs.get("expect_count", False)
@@ -134,7 +144,6 @@ def do_add_book(p, xargs):
     expect_print_output(p)
 
 def do_get_book_id(p, xargs):
-    p.sendline("get_book")
     book_ids = xargs.get("book_ids")
     idx = xargs.get("book_idx")
     if not book_ids:
@@ -142,16 +151,17 @@ def do_get_book_id(p, xargs):
     if idx >= len(book_ids):
         raise CheckerException("No book index: %s" % str(idx))
     book_id = book_ids[idx]
+    p.sendline("get_book")
     expect_send_params(p, {"id": book_id})
-    p.expect(pexpect.TIMEOUT)
+    buf = expect_flush_output(p)
     expect_book = xargs.get("expect_book", False)
     if type(expect_book) is dict:
         for field in expect_book.keys():
-            values = extract_book_fields(p.before, field)
+            values = extract_book_fields(buf, field)
             if not values:
                 raise CheckerException("Cannot find book field '%s'" % field)
             if len(values) != 1:
-                raise CheckerException("Multiple '%s' fields found in output!" % field)
+                raise CheckerException("Multiple '%s' fields found in output: %s!" % (field, values))
             if str(values[0]) != str(expect_book[field]):
                 raise CheckerException("Book field '%s' mismatch: %s != %s" % 
                                        (field, values[0], expect_book[field]))
