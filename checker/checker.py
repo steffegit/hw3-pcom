@@ -291,7 +291,9 @@ SCRIPTS = {
 }
 
 def run_tasks(p, args):
-    script_name = args.get("script", "full")
+    script_name = args.get("script")
+    if not script_name:
+        script_name = "full"
     if script_name not in SCRIPTS:
         raise CheckerException("Invalid script: %s" % (script_name))
     script = SCRIPTS[script_name]
