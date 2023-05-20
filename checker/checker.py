@@ -19,8 +19,8 @@ TEST_PASSWORD = "test123"
 EXPECT_TIMEOUT = 1  # 1 second should be enough...
 TEXT_INDENT = "    "
 
-RE_SUCCESS = r"^.*([Ss]uccess?|OK|[Oo]kay).*$"
-RE_ERROR = r"^.*([Ee]rror|[Ff]ail|[Ee]suat).*$"
+RE_SUCCESS = re.compile(r"^.*(succ?ess?|ok|okay).*$", re.IGNORECASE)
+RE_ERROR = re.compile(r"^.*(err?oa?r|fail|esuat).*$", re.IGNORECASE)
 # JSON parsing using RegExp: don't do this at home!
 RE_BOOK_ID = r"id[ \t\f\v]*=[ \t\f\v]*([0-9]+)|\"id\"\s*:\s*\"?([0-9]+)"
 RE_EXTRACT_FIELD = r"%s[ \t\f\v]*=[ \t\f\v]*([^\r\n]+)\s*?|\"%s\"\s*:\s*(?:\"([^\"]+)|([0-9]+))"
@@ -168,7 +168,6 @@ def do_get_book_id(p, xargs):
         color_print(wrap_test_output("OKAY: fields match!"), fg="green", style="bold")
 
 def do_delete_book(p, xargs):
-    p.sendline("delete_book")
     book_ids = xargs.get("book_ids")
     idx = xargs.get("book_idx")
     if not book_ids:
@@ -176,8 +175,18 @@ def do_delete_book(p, xargs):
     if idx >= len(book_ids):
         raise CheckerException("No book index: %s" % str(idx))
     book_id = book_ids[idx]
+    p.sendline("delete_book")
     expect_send_params(p, {"id": book_id})
     expect_print_output(p)
+
+def do_delete_all_books(p, xargs):
+    book_ids = xargs.get("book_ids")
+    if not book_ids:
+        raise CheckerException("No books found!")
+    for book_id in book_ids:
+        p.sendline("delete_book")
+        expect_send_params(p, {"id": book_id})
+        expect_print_output(p)
 
 def do_logout(p, xargs):
     p.sendline("logout")
@@ -196,38 +205,84 @@ ACTIONS = {
     "get_book_id": do_get_book_id,
     "add_book": do_add_book,
     "delete_book": do_delete_book,
+    "delete_all_books": do_delete_all_books,
     "logout": do_logout,
     "exit": do_exit,
 }
+
+SAMPLE_BOOKS = [
+    {
+        "title": "Computer Networks", "author": "A. Tanenbaum et. al.",
+        "genre": "Manual", "publisher": "Prentice Hall", "page_count": 950,
+    },
+    {
+        "title": "Viata Lui Nutu Camataru: Dresor de Lei si de Fraieri",
+        "author": "Codin Maticiuc", "genre": "Lifestyle", "publisher": "Scoala Vietii",
+        "page_count": 200,
+    },
+    {
+        "title": "Oracle SQL, SQL*Plus", "author": "Alexandru Boicea",
+        "publisher": "Printech", "genre": "BD", "page_count": 112
+    },
+]
+_book_test_fields = lambda idx: {key: SAMPLE_BOOKS[idx][key] for key in ("title", "author", "page_count")}
 
 SCRIPTS = {
     "full": [
         ("register", {}),  # use CLI-provided user
         ("login", {}), ("enter_library", {}),
         ("get_books", {"expect_count": False}),
-        ("add_book", {"book": {
-                "title": "Computer Networks", "author": "A. Tanenbaum et. al.",
-                "genre": "Manual", "publisher": "Prentice Hall", "page_count": 950,
-            }}),
-        ("add_book", {"book": {
-                "title": "Viata Lui Nutu Camataru: Dresor de Lei si de Fraieri",
-                "author": "Codin Maticiuc", "genre": "Lifestyle", "publisher": "Scoala Vietii",
-                "page_count": 200,
-            }}),
+        ("add_book", {"book": SAMPLE_BOOKS[0]}),
+        ("add_book", {"book": SAMPLE_BOOKS[1]}),
         ("get_books", {"expect_count": 2}),
         ("get_book_id", {"book_idx": 0, "expect_book": {"title": "Computer Networks", "page_count": 950}}),
         ("delete_book", {"book_idx": 1}),
         ("logout", {}), ("exit", {}), 
     ],
-    "readonly": [
-        ("register", {}),  # use CLI-provided user
+    "add3": [
+        ("register", {}),
         ("login", {}), ("enter_library", {}),
-        ("get_books", {"expect_count": 2}),
-        ("get_book_id", {"book_idx": 0, "expect_book": {"title": "Computer Networks", "page_count": 950}}),
+        ("get_books", {"expect_count": False}),
+        ("add_book", {"book": SAMPLE_BOOKS[0]}),
+        ("add_book", {"book": SAMPLE_BOOKS[1]}),
+        ("add_book", {"book": SAMPLE_BOOKS[2]}),
+        ("get_books", {"expect_count": 3}),
+        ("get_book_id", {"book_idx": 2, "expect_book": _book_test_fields(2)}),
+        ("get_book_id", {"book_idx": 0, "expect_book": _book_test_fields(0)}),
+        ("get_book_id", {"book_idx": 1, "expect_book": _book_test_fields(1)}),
         ("logout", {}), ("exit", {}), 
-    ]
-}
+    ],
+    "read3": [
+        ("login", {}), ("enter_library", {}),
+        ("get_books", {"expect_count": 3}),
+        ("get_book_id", {"book_idx": 1, "expect_book": SAMPLE_BOOKS[1]}),
+        ("logout", {}), ("exit", {}), 
+    ],
+    "delete_all": [
+        ("login", {}), ("enter_library", {}),
+        ("get_books", {}), ("delete_all_books", {}),
+        ("logout", {}), ("exit", {}), 
+    ],
 
+    # for the following ones, errors should be reported by the user program
+    "invalid_user": [
+        ("register", {"user": "hahah don't create this:test123"}),
+        ("login", {}), ("enter_library", {}),
+        ("logout", {}), ("exit", {}), 
+    ],
+    "invalid_book_fields": [
+        ("register", {}),
+        ("login", {}), ("enter_library", {}),
+        ("add_book", {"book": {"title": "Something Invalid"}}),
+        ("logout", {}), ("exit", {}), 
+    ],
+    "invalid_book_pages": [
+        ("register", {}),
+        ("login", {}), ("enter_library", {}),
+        ("add_book", {"book": dict(SAMPLE_BOOKS[0], page_count="nope")}),
+        ("logout", {}), ("exit", {}), 
+    ],
+}
 
 def run_tasks(p, args):
     script_name = args.script or "full"
