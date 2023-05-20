@@ -6,6 +6,7 @@ Dependencies: pexpect
 """
 
 import sys
+import shlex
 import traceback
 from collections import namedtuple
 import argparse
@@ -338,7 +339,7 @@ if __name__ == "__main__":
     parser.add_argument('-i', '--ignore', help="Ignore errors (do not break the tests)", action="store_true")
 
     args = parser.parse_args()
-    p = pexpect.spawn(args.program, encoding='utf-8', echo=False, timeout=EXPECT_TIMEOUT)
+    p = pexpect.spawn(shlex.quote(args.program), encoding='utf-8', echo=False, timeout=EXPECT_TIMEOUT)
     if args.debug:
         p.logfile_send = ExpectInputWrapper(direction=True)
         p.logfile_read = ExpectInputWrapper(direction=False)
