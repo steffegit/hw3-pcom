@@ -199,6 +199,10 @@ def do_exit(p, xargs):
     p.sendline("exit")
     p.expect(pexpect.EOF)
 
+def interactive_shell(p, xargs):
+    p.setecho(True)
+    p.interact()
+
 
 ACTIONS = {
     "register": do_register,
@@ -211,6 +215,7 @@ ACTIONS = {
     "delete_all_books": do_delete_all_books,
     "logout": do_logout,
     "exit": do_exit,
+    "shell": interactive_shell,
 }
 
 SAMPLE_BOOKS = [
@@ -267,6 +272,13 @@ SCRIPTS = {
         ("login", {}), ("enter_library", {}),
         ("get_books", {}), ("delete_all_books", {"delete_books_ignore": True}),
         ("get_books", {"expect_count": 0}),
+        ("logout", {}), ("exit", {}), 
+    ],
+
+    # interactive shell
+    "SHELL": [
+        ("register", {}), ("login", {}), ("enter_library", {}),
+        ("shell", {}),
         ("logout", {}), ("exit", {}), 
     ],
 
