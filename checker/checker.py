@@ -20,6 +20,8 @@ TEST_PASSWORD = "test123"
 EXPECT_TIMEOUT = 1  # 1 second should be enough...
 TEXT_INDENT = "    "
 
+EXPECT_SEP = "="
+
 RE_SUCCESS = re.compile(r"^.*((?:^|\W)succ?ess?|(?:^|\W)ok(?:$|\W)|(?:^|\W)okay).*$", re.IGNORECASE)
 RE_ERROR = re.compile(r"^.*((?:^|\W)err?oa?r|(?:^|\W)fail|(?:^|\W)esuat).*$", re.IGNORECASE)
 # JSON parsing using RegExp: don't do this at home!
@@ -66,7 +68,7 @@ def normalize_user(xargs):
 
 def expect_send_params(p, xvars):
     keys = list(xvars.keys())
-    xpatterns =  [(r"(" + kw + r")[ \t\f\v]*=[ \t\f\v]*") for kw in keys]
+    xpatterns =  [(r"(" + kw + r")[ \t\f\v]*" + EXPECT_SEP + r"[ \t\f\v]*") for kw in keys]
     xseen = set()
     while xseen != set(keys):
         idx = p.expect(xpatterns)
@@ -351,12 +353,16 @@ if __name__ == "__main__":
             "(separated by colon, e.g. `-u user:pass`")
     parser.add_argument('-d', '--debug', help="Enable debug output", action="store_true")
     parser.add_argument('-i', '--ignore', help="Ignore errors (do not break the tests)", action="store_true")
+    parser.add_argument('-E', '--use-colon', help="Use ':' as field prompt separator instead of '='", action="store_true")
 
     args = parser.parse_args()
     p = pexpect.spawn(shlex.quote(args.program), encoding='utf-8', echo=False, timeout=EXPECT_TIMEOUT)
     if args.debug:
         p.logfile_send = ExpectInputWrapper(direction=True)
         p.logfile_read = ExpectInputWrapper(direction=False)
+
+    if args.use_colon:
+        EXPECT_SEP = ":"
 
     try:
         run_tasks(p, vars(args))
