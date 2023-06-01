@@ -237,6 +237,18 @@ SAMPLE_BOOKS = [
 ]
 _book_test_fields = lambda idx: {key: SAMPLE_BOOKS[idx][key] for key in ("title", "author", "page_count")}
 
+SAMPLE_BOOKS_NS = [
+    {
+        "title": "Computer_Networks", "author": "A._Tanenbaum_et._al.",
+        "genre": "Manual", "publisher": "Prentice_Hall", "page_count": 950,
+    },
+    {
+        "title": "Viata_Lui_Nutu_Camataru:_Dresor_de_Lei_si_de_Fraieri",
+        "author": "Codin_Maticiuc", "genre": "Lifestyle", "publisher": "Scoala_Vietii",
+        "page_count": 200,
+    },
+]
+
 SCRIPTS = {
     "ALL": ["full", "delete_all", "add3", "read3", "delete_all",
             "invalid_user", "invalid_book_fields", "invalid_book_pages", "delete_all"],
@@ -248,6 +260,17 @@ SCRIPTS = {
         ("add_book", {"book": SAMPLE_BOOKS[1]}),
         ("get_books", {"expect_count": 2}),
         ("get_book_id", {"book_idx": 0, "expect_book": {"title": "Computer Networks", "page_count": 950}}),
+        ("delete_book", {"book_idx": 1}),
+        ("logout", {}), ("exit", {}), 
+    ],
+    "nospace": [
+        ("register", {}),  # use CLI-provided user
+        ("login", {}), ("enter_library", {}),
+        ("get_books", {"expect_count": False}),
+        ("add_book", {"book": SAMPLE_BOOKS_NS[0]}),
+        ("add_book", {"book": SAMPLE_BOOKS_NS[1]}),
+        ("get_books", {"expect_count": 2}),
+        ("get_book_id", {"book_idx": 0, "expect_book": {"title": "ComputerNetworks", "page_count": 950}}),
         ("delete_book", {"book_idx": 1}),
         ("logout", {}), ("exit", {}), 
     ],
