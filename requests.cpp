@@ -62,3 +62,25 @@ std::string compute_post_request(const std::string& host,
 
     return message.str();
 }
+
+std::string compute_delete_request(const std::string& host,
+                                   const std::string& path,
+                                   const std::vector<std::string>& cookies) {
+    std::stringstream message;
+
+    message << "DELETE " << path << " HTTP/1.1\r\n";
+    message << "Host: " << host << "\r\n";
+    message << "Accept: application/json\r\n";
+
+    if (!cookies.empty()) {
+        message << "Cookie: " << cookies[0];
+        for (size_t i = 1; i < cookies.size(); ++i) {
+            message << "; " << cookies[i];
+        }
+        message << "\r\n";
+    }
+
+    message << "\r\n";  // End of headers
+
+    return message.str();
+}

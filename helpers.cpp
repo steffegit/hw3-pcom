@@ -61,12 +61,13 @@ void send_request(int sockfd, const std::string& message) {
     }
 }
 
-std::string recv_response(int sockfd) {
+std::string recv_response(int& sockfd, std::string host) {
     std::string buffer;
     buffer.reserve(BUFLEN);
     std::vector<char> response(BUFLEN);
     size_t header_end = 0;
     size_t content_length = 0;
+    bool connection_closed = false;
 
     do {
         ssize_t bytes = read(sockfd, response.data(), BUFLEN);
@@ -74,42 +75,53 @@ std::string recv_response(int sockfd) {
             error("ERROR reading response from socket");
         }
         if (bytes == 0) {
-            break;  // EOF
+            // Connection closed by server
+            connection_closed = true;
+            break;
         }
 
         buffer.append(response.data(), static_cast<size_t>(bytes));
 
         header_end = buffer.find(HEADER_TERMINATOR);
         if (header_end != std::string::npos) {
+            // Connection: close => i need to reopen the connection
+            if (buffer.find("Connection: close") != std::string::npos) {
+                connection_closed = true;
+            }
+
             header_end += HEADER_TERMINATOR_SIZE;
 
             size_t content_length_start = buffer.find(CONTENT_LENGTH);
-            if (content_length_start == std::string::npos) {
-                continue;
-            }
-
-            content_length_start += CONTENT_LENGTH_SIZE;
-            size_t content_length_end =
-                buffer.find("\r\n", content_length_start);
-            if (content_length_end != std::string::npos) {
-                content_length = std::stoul(
-                    buffer.substr(content_length_start,
-                                  content_length_end - content_length_start));
+            if (content_length_start != std::string::npos) {
+                content_length_start += CONTENT_LENGTH_SIZE;
+                content_length =
+                    std::stoul(buffer.substr(content_length_start));
+                break;
+            } else {
                 break;
             }
         }
     } while (true);
 
-    size_t total = content_length + header_end;
-    while (buffer.length() < total) {
-        ssize_t bytes = read(sockfd, response.data(), BUFLEN);
-        if (bytes < 0) {
-            error("ERROR reading response from socket");
+    if (content_length > 0) {
+        size_t total = content_length + header_end;
+        while (buffer.length() < total && !connection_closed) {
+            ssize_t bytes = read(sockfd, response.data(), BUFLEN);
+            if (bytes <= 0) {
+                connection_closed = true;
+                break;
+            }
+            buffer.append(response.data(), static_cast<size_t>(bytes));
         }
-        if (bytes == 0) {
-            break;  // EOF
-        }
-        buffer.append(response.data(), static_cast<size_t>(bytes));
+    }
+
+    // if closed, reopen the connection
+    if (connection_closed) {
+        close_conn(sockfd);
+        // FIXME: this is a hack, i need to find a better way to do this
+        std::string IP = host.substr(0, host.find(":"));
+        int PORT = std::stoi(host.substr(host.find(":") + 1));
+        sockfd = open_conn(IP, PORT, AF_INET, SOCK_STREAM, 0);
     }
 
     return buffer;
