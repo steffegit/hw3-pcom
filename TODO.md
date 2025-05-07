@@ -1,8 +1,8 @@
 - [x] login_admin - efectuează autentificarea pentru admin (doar admin)
 - [x] add_user - adaugă un nou utilizator normal (doar admin)
 - [x] get_users - cere toti utilizatorii de pe server (doar admin)
-- [ ] delete_user - șterge un utilizator normal (doar admin)
-- [ ] logout_admin - efectuează delogarea pentru admin (doar admin)
+- [x] delete_user - șterge un utilizator normal (doar admin)
+- [x] logout_admin - efectuează delogarea pentru admin (doar admin)
 - [ ] login - efectuează autentificarea pentru utilizator normal
 - [ ] get_access - cere acces pentru colectia de filme
 - [ ] get_movies - cere toate filmele de pe server

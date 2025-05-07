@@ -139,6 +139,21 @@ void delete_user(int sockfd, std::string host, std::string session_cookie) {
     }
 }
 
+void logout_admin(int sockfd, std::string host, std::string& session_cookie) {
+    std::string request = compute_get_request(host, "/api/v1/tema/admin/logout",
+                                              {}, {session_cookie});
+
+    send_request(sockfd, request);
+    std::string response = recv_response(sockfd, host);
+
+    if (status_code(response, 200)) {
+        session_cookie = "";  // clear the cookie
+        success_msg("Adminul a fost delogat cu succes");
+    } else {
+        error_msg("Nu am putut deloga adminul");
+    }
+}
+
 int main() {
     std::string IP = "63.32.125.183";
     int PORT = 8081;
@@ -151,15 +166,11 @@ int main() {
 
     // TODO: REMOVE THIS
     DEBUG_login_admin(sockfd, host, session_cookie);
-    if (!session_cookie.empty()) {
-        // reopen connection
-        close_conn(sockfd);
-        sockfd = open_conn(IP, PORT, AF_INET, SOCK_STREAM, 0);
-    }
 
-    add_user(sockfd, host, session_cookie);
-    get_users(sockfd, host, session_cookie);
-    delete_user(sockfd, host, session_cookie);
+    // add_user(sockfd, host, session_cookie);
+    // get_users(sockfd, host, session_cookie);
+    // delete_user(sockfd, host, session_cookie);
+    // logout_admin(sockfd, host, session_cookie);
     close_conn(sockfd);
     return 0;
 }
