@@ -5,6 +5,19 @@ void error(const std::string& msg) {
     exit(1);
 }
 
+void success_msg(std::string msg) {
+    std::cout << "SUCCESS: " << msg << std::endl;
+}
+
+void error_msg(std::string msg) {
+    std::cout << "ERROR: " << msg << std::endl;
+}
+
+bool status_code(std::string response, int expected_code) {
+    std::string line = response.substr(0, response.find("\r\n"));  // first line
+    return line.find(std::to_string(expected_code)) != std::string::npos;
+}
+
 int open_conn(std::string host,
               int port,
               int iptype,

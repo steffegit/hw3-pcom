@@ -13,6 +13,9 @@ constexpr const char* CONTENT_LENGTH = "Content-Length: ";
 constexpr size_t CONTENT_LENGTH_SIZE = 16;
 
 void error(const std::string& msg);
+void success_msg(std::string msg);
+void error_msg(std::string msg);
+bool status_code(std::string response, int expected_code);
 int open_conn(std::string host,
               int port,
               int iptype,

@@ -7,20 +7,7 @@
 
 using json = nlohmann::json;
 
-void success_msg(std::string msg) {
-    std::cout << "SUCCESS: " << msg << std::endl;
-}
-
-void error_msg(std::string msg) {
-    std::cout << "ERROR: " << msg << std::endl;
-}
-
-bool success(std::string response, int expected_code) {
-    std::string line = response.substr(0, response.find("\r\n"));  // first line
-    return line.find(std::to_string(expected_code)) != std::string::npos;
-}
-
-std::string login_admin(int sockfd, std::string host) {
+void login_admin(int sockfd, std::string host, std::string& session_cookie) {
     std::string username, password;
     std::cout << "username=";
     std::cin >> username;
@@ -35,7 +22,7 @@ std::string login_admin(int sockfd, std::string host) {
     send_request(sockfd, request);
     std::string response = recv_response(sockfd);
 
-    if (success(response, 200)) {
+    if (status_code(response, 200)) {
         success_msg("Admin autentificat cu succes");
     } else {
         error_msg("Nu am putut autentifica adminul");
@@ -51,8 +38,6 @@ std::string login_admin(int sockfd, std::string host) {
     if (cookie.empty()) {
         error_msg("Nu am putut obtine cookie-ul");
     }
-
-    return cookie;
 }
 
 void add_user(int sockfd, std::string host, std::string session_cookie) {
@@ -74,10 +59,12 @@ void add_user(int sockfd, std::string host, std::string session_cookie) {
     std::string response = recv_response(sockfd);
 
     // 201 = created
-    // 209 = conflict
+    // 209 = conflict (userul deja exista)
 
-    if (response.find("201") != std::string::npos) {
+    if (status_code(response, 201)) {
         success_msg("User adaugat cu succes");
+    } else if (status_code(response, 209)) {
+        success_msg("Userul exista deja");
     } else {
         error_msg("Nu am putut adauga userul");
     }
@@ -88,9 +75,10 @@ int main() {
     int PORT = 8081;
 
     std::string host = IP + ":" + std::to_string(PORT);
+    std::string session_cookie = "";
 
     int sockfd = open_conn(IP, PORT, AF_INET, SOCK_STREAM, 0);
-    std::string session_cookie = login_admin(sockfd, host);
+    login_admin(sockfd, host, session_cookie);
 
     if (!session_cookie.empty()) {
         // reopen connection
@@ -98,7 +86,7 @@ int main() {
         sockfd = open_conn(IP, PORT, AF_INET, SOCK_STREAM, 0);
     }
 
-    add_user(sockfd, host, session_cookie);
+    // add_user(sockfd, host, session_cookie);
 
     close_conn(sockfd);
     return 0;
