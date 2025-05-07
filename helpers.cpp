@@ -55,8 +55,7 @@ std::string recv_response(int sockfd) {
     size_t header_end = 0;
     size_t content_length = 0;
 
-    // Read until we find the header end
-    while (true) {
+    do {
         ssize_t bytes = read(sockfd, response.data(), BUFLEN);
         if (bytes < 0) {
             error("ERROR reading response from socket");
@@ -67,27 +66,27 @@ std::string recv_response(int sockfd) {
 
         buffer.append(response.data(), static_cast<size_t>(bytes));
 
-        // Find header end
         header_end = buffer.find(HEADER_TERMINATOR);
         if (header_end != std::string::npos) {
             header_end += HEADER_TERMINATOR_SIZE;
 
-            // Find content length
             size_t content_length_start = buffer.find(CONTENT_LENGTH);
-            if (content_length_start != std::string::npos) {
-                content_length_start += CONTENT_LENGTH_SIZE;
-                try {
-                    content_length =
-                        std::stoul(buffer.substr(content_length_start));
-                    break;
-                } catch (const std::exception&) {
-                    continue;
-                }
+            if (content_length_start == std::string::npos) {
+                continue;
+            }
+
+            content_length_start += CONTENT_LENGTH_SIZE;
+            size_t content_length_end =
+                buffer.find("\r\n", content_length_start);
+            if (content_length_end != std::string::npos) {
+                content_length = std::stoul(
+                    buffer.substr(content_length_start,
+                                  content_length_end - content_length_start));
+                break;
             }
         }
-    }
+    } while (true);
 
-    // Read remaining content
     size_t total = content_length + header_end;
     while (buffer.length() < total) {
         ssize_t bytes = read(sockfd, response.data(), BUFLEN);
@@ -95,7 +94,7 @@ std::string recv_response(int sockfd) {
             error("ERROR reading response from socket");
         }
         if (bytes == 0) {
-            break;
+            break;  // EOF
         }
         buffer.append(response.data(), static_cast<size_t>(bytes));
     }

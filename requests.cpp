@@ -35,7 +35,8 @@ std::string compute_get_request(const std::string& host,
 std::string compute_post_request(const std::string& host,
                                  const std::string& path,
                                  const json& body_data,
-                                 const std::vector<std::string>& cookies) {
+                                 const std::vector<std::string>& cookies,
+                                 const std::string& authorization) {
     std::stringstream message;
 
     message << "POST " << path << " HTTP/1.1\r\n";
@@ -46,6 +47,10 @@ std::string compute_post_request(const std::string& host,
     body_data_buffer = body_data.dump();
 
     message << "Content-Length: " << body_data_buffer.length() << "\r\n";
+
+    if (!authorization.empty()) {
+        message << "Authorization: Bearer " << authorization << "\r\n";
+    }
 
     if (!cookies.empty()) {
         message << "Cookie: " << cookies[0];

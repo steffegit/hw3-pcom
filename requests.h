@@ -16,4 +16,5 @@ std::string compute_get_request(const std::string& host,
 std::string compute_post_request(const std::string& host,
                                  const std::string& path,
                                  const json& body_data,
-                                 const std::vector<std::string>& cookies);
+                                 const std::vector<std::string>& cookies,
+                                 const std::string& authorization);
