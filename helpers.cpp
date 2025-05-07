@@ -30,7 +30,7 @@ void close_conn(int sockfd) {
     close(sockfd);
 }
 
-void send_to_server(int sockfd, const std::string& message) {
+void send_request(int sockfd, const std::string& message) {
     size_t sent = 0;
     const size_t total = message.length();
 
@@ -48,7 +48,7 @@ void send_to_server(int sockfd, const std::string& message) {
     }
 }
 
-std::string recv_from_server(int sockfd) {
+std::string recv_response(int sockfd) {
     std::string buffer;
     buffer.reserve(BUFLEN);
     std::vector<char> response(BUFLEN);

@@ -19,5 +19,5 @@ int open_conn(std::string host,
               int socket_type,
               int flags);
 void close_conn(int sockfd);
-void send_to_server(int sockfd, const std::string& message);
-std::string recv_from_server(int sockfd);
+void send_request(int sockfd, const std::string& message);
+std::string recv_response(int sockfd);

@@ -1,0 +1,20 @@
+- [x] login_admin - efectuează autentificarea pentru admin (doar admin)
+- [] add_user - adaugă un nou utilizator normal (doar admin)
+- [] get_users - cere toti utilizatorii de pe server (doar admin)
+- [] delete_user - șterge un utilizator normal (doar admin)
+- [] logout_admin - efectuează delogarea pentru admin (doar admin)
+- [] login - efectuează autentificarea pentru utilizator normal
+- [] get_access - cere acces pentru colectia de filme
+- [] get_movies - cere toate filmele de pe server
+- [] get_movie - cere informaţie despre un film
+- [] add_movie - adaugă un film
+- [] delete_movie - șterge un film
+- [] update_movie - actualizeaza datele unui film
+- [] get_collections - cere toate colecțiile de filme de pe server
+- [] get_collection - cere informaţie despre o colecție de filme
+- [] add_collection - adaugă o colecție de filme
+- [] delete_collection - șterge o colecție de filme
+- [] add_movie_to_collection - adaugă un film intr-o colecție
+- [] delete_movie_from_collection - șterge un film dintr-o colecție
+- [] logout - efectueaza delogarea utilizatorului
+- [] exit - efectueaza ieșirea din program
