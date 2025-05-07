@@ -1,4 +1,10 @@
+#pragma once
+
+#include <arpa/inet.h>
+#include <unistd.h>
 #include <iostream>
+#include <string>
+#include <vector>
 
 constexpr size_t BUFLEN = 4096;
 constexpr const char* HEADER_TERMINATOR = "\r\n\r\n";
