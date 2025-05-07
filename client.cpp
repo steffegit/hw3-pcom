@@ -32,10 +32,9 @@ void login_admin(int sockfd, std::string host, std::string& session_cookie) {
     size_t cookie_start =
         response.find("Set-Cookie: ") + 12;  // +12 to skip "Set-Cookie: "
     size_t cookie_end = response.find(";", cookie_start);
-    std::string cookie =
-        response.substr(cookie_start, cookie_end - cookie_start);
+    session_cookie = response.substr(cookie_start, cookie_end - cookie_start);
 
-    if (cookie.empty()) {
+    if (session_cookie.empty()) {
         error_msg("Nu am putut obtine cookie-ul");
     }
 }
@@ -48,12 +47,9 @@ void add_user(int sockfd, std::string host, std::string session_cookie) {
     std::cin >> password;
 
     json body_data = {{"username", username}, {"password", password}};
-    std::string cookie = "session=" + session_cookie;
 
     std::string request = compute_post_request(host, "/api/v1/tema/admin/users",
-                                               body_data, {cookie});
-
-    std::cout << request << std::endl;
+                                               body_data, {session_cookie});
 
     send_request(sockfd, request);
     std::string response = recv_response(sockfd);
@@ -67,6 +63,22 @@ void add_user(int sockfd, std::string host, std::string session_cookie) {
         success_msg("Userul exista deja");
     } else {
         error_msg("Nu am putut adauga userul");
+    }
+}
+
+void get_users(int sockfd, std::string host, std::string session_cookie) {
+    std::string request = compute_get_request(host, "/api/v1/tema/admin/users",
+                                              {}, {session_cookie});
+
+    send_request(sockfd, request);
+    std::string response = recv_response(sockfd);
+
+    std::cout << response << std::endl;
+
+    if (status_code(response, 200)) {
+        success_msg("Useri obtinuti cu succes");
+    } else {
+        error_msg("Nu am putut obtine userii");
     }
 }
 
@@ -87,7 +99,7 @@ int main() {
     }
 
     // add_user(sockfd, host, session_cookie);
-
+    // get_users(sockfd, host, session_cookie);
     close_conn(sockfd);
     return 0;
 }

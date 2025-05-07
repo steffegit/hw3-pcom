@@ -112,7 +112,5 @@ std::string recv_response(int sockfd) {
         buffer.append(response.data(), static_cast<size_t>(bytes));
     }
 
-    std::cout << buffer << std::endl;  // DEBUG
-
     return buffer;
 }
