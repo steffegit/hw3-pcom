@@ -192,7 +192,7 @@ void login(int sockfd, std::string host, std::string& session_cookie) {
 void get_access(int sockfd,
                 std::string host,
                 std::string session_cookie,
-                std::string jwt_token) {
+                std::string& jwt_token) {
     std::string request = compute_get_request(
         host, "/api/v1/tema/library/access", {}, {session_cookie});
 
@@ -201,14 +201,37 @@ void get_access(int sockfd,
 
     if (status_code(response, 200)) {
         success_msg("Accesul a fost obtinut cu succes");
+
+        // Extract the token from the JSON response
+        size_t body_start = response.find("\r\n\r\n") + 4;
+        std::string body = response.substr(body_start);
+
+        json response_json = json::parse(body);
+        jwt_token = response_json["token"];
     } else {
         error_msg("Nu am putut obtine accesul");
     }
+}
 
-    // parse response as json and retrieve "token" attribute
+void get_movies(int sockfd,
+                std::string host,
+                std::string session_cookie,
+                std::string jwt_token) {
+    std::string request = compute_get_request(
+        host, "/api/v1/tema/library/movies", {}, {session_cookie}, jwt_token);
 
-    json response_json = json::parse(response);
-    jwt_token = response_json["token"];
+    std::cout << request << std::endl;  // TODO: REMOVE THIS !!! DEBUG ONLY
+
+    send_request(sockfd, request);
+    std::string response = recv_response(sockfd, host);
+
+    std::cout << response << std::endl;  // TODO: REMOVE THIS !!! DEBUG ONLY
+
+    if (status_code(response, 200)) {
+        success_msg("Filmele au fost obtinute cu succes");
+    } else {
+        error_msg("Nu am putut obtine filmele");
+    }
 }
 
 int main() {
@@ -232,6 +255,7 @@ int main() {
     // logout_admin(sockfd, host, admin_session_cookie);
     login(sockfd, host, user_session_cookie);
     get_access(sockfd, host, user_session_cookie, jwt_token);
+    get_movies(sockfd, host, user_session_cookie, jwt_token);
 
     close_conn(sockfd);
     return 0;
