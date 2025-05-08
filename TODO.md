@@ -3,8 +3,8 @@
 - [x] get_users - cere toti utilizatorii de pe server (doar admin)
 - [x] delete_user - șterge un utilizator normal (doar admin)
 - [x] logout_admin - efectuează delogarea pentru admin (doar admin)
-- [ ] login - efectuează autentificarea pentru utilizator normal
-- [ ] get_access - cere acces pentru colectia de filme
+- [x] login - efectuează autentificarea pentru utilizator normal
+- [x] get_access - cere acces pentru colectia de filme
 - [ ] get_movies - cere toate filmele de pe server
 - [ ] get_movie - cere informaţie despre un film
 - [ ] add_movie - adaugă un film
