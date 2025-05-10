@@ -1,5 +1,6 @@
 #include <sys/socket.h>
 #include <iostream>
+#include <limits>
 #include <string>
 #include "helpers.h"
 #include "nlohmann.hpp"
@@ -206,21 +207,29 @@ void get_access(int sockfd,
         size_t body_start = response.find("\r\n\r\n") + 4;
         std::string body = response.substr(body_start);
 
-        json response_json = json::parse(body);
-        jwt_token = response_json["token"];
+        try {
+            json response_json = json::parse(body);
+            jwt_token = response_json["token"];
+        } catch (const std::exception& e) {
+            error_msg("Nu am putut obtine accesul (eroare parsare json)");
+            std::cout << e.what() << std::endl;
+
+            std::cout << response
+                      << std::endl;  // TODO: REMOVE THIS !!! DEBUG ONLY
+        }
     } else {
         error_msg("Nu am putut obtine accesul");
     }
 }
 
+// TODO: revino aici, trebuie sa faci formatul ca aici:
+// https://pcom.pages.upb.ro/enunt-tema4/client.html#7-get_movies-10p
 void get_movies(int sockfd,
                 std::string host,
                 std::string session_cookie,
                 std::string jwt_token) {
     std::string request = compute_get_request(
         host, "/api/v1/tema/library/movies", {}, {session_cookie}, jwt_token);
-
-    std::cout << request << std::endl;  // TODO: REMOVE THIS !!! DEBUG ONLY
 
     send_request(sockfd, request);
     std::string response = recv_response(sockfd, host);
@@ -231,6 +240,98 @@ void get_movies(int sockfd,
         success_msg("Filmele au fost obtinute cu succes");
     } else {
         error_msg("Nu am putut obtine filmele");
+    }
+}
+
+void get_movie(int sockfd,
+               std::string host,
+               std::string session_cookie,
+               std::string jwt_token) {
+    std::string movie_id;
+    std::cout << "id=";
+    std::cin >> movie_id;
+
+    // check if movie_id is a number
+    if (!std::all_of(movie_id.begin(), movie_id.end(), ::isdigit)) {
+        error_msg("Id-ul filmului trebuie sa fie un numar");
+        return;
+    }
+
+    std::string request =
+        compute_get_request(host, "/api/v1/tema/library/movies/" + movie_id, {},
+                            {session_cookie}, jwt_token);
+
+    send_request(sockfd, request);
+
+    std::string response = recv_response(sockfd, host);
+
+    std::cout << response << std::endl;  // TODO: REMOVE THIS !!! DEBUG ONLY
+
+    if (status_code(response, 200)) {
+        success_msg("Filmul a fost obtinut cu succes");
+    } else {
+        error_msg("Nu am putut obtine filmul cu id-ul " + movie_id);
+    }
+}
+
+// TODO: server error here, come back to this
+void add_movie(int sockfd,
+               std::string host,
+               std::string session_cookie,
+               std::string jwt_token) {
+    // year should be int
+    // rating should be float
+    std::string title, description;
+    int year;
+    float rating;
+
+    std::cout << "title=";
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    std::getline(std::cin, title);
+
+    std::cout << "year=";
+    std::string year_str;
+    std::getline(std::cin, year_str);
+    try {
+        year = std::stoi(year_str);
+    } catch (const std::exception& e) {
+        error_msg("Anul trebuie sa fie un numar intreg");
+        return;
+    }
+
+    std::cout << "description=";
+    std::getline(std::cin, description);
+
+    std::cout << "rating=";
+    std::string rating_str;
+    std::getline(std::cin, rating_str);
+    try {
+        rating = std::stof(rating_str);
+    } catch (const std::exception& e) {
+        error_msg("Rating-ul trebuie sa fie un numar real");
+        return;
+    }
+
+    json body_data = {{"title", title},
+                      {"year", year},
+                      {"description", description},
+                      {"rating", rating}};
+
+    std::string request =
+        compute_post_request(host, "/api/v1/tema/library/movies", body_data,
+                             {session_cookie}, jwt_token);
+
+    std::cout << request << std::endl;  // TODO: REMOVE THIS !!! DEBUG ONLY
+
+    send_request(sockfd, request);
+    std::string response = recv_response(sockfd, host);
+
+    std::cout << response << std::endl;  // TODO: REMOVE THIS !!! DEBUG ONLY
+
+    if (status_code(response, 201)) {
+        success_msg("Filmul a fost adaugat cu succes");
+    } else {
+        error_msg("Nu am putut adauga filmul");
     }
 }
 
@@ -255,8 +356,9 @@ int main() {
     // logout_admin(sockfd, host, admin_session_cookie);
     login(sockfd, host, user_session_cookie);
     get_access(sockfd, host, user_session_cookie, jwt_token);
+    add_movie(sockfd, host, user_session_cookie, jwt_token);
     get_movies(sockfd, host, user_session_cookie, jwt_token);
-
+    get_movie(sockfd, host, user_session_cookie, jwt_token);
     close_conn(sockfd);
     return 0;
 }
