@@ -630,6 +630,7 @@ void delete_collection(int& sockfd,
     }
 }
 
+// TODO: THIS NOT WORKS
 void add_movie_to_collection(int& sockfd,
                              std::string host,
                              std::string session_cookie,
@@ -651,18 +652,40 @@ void add_movie_to_collection(int& sockfd,
         error_msg("Id-ul filmului trebuie sa fie un numar");
         return;
     }
-    json body_data = {{"id", std::stoi(movie_id)}};
+
+    // grab the title of the collection
+
+    std::string request_get = compute_get_request(
+        host, "/api/v1/tema/library/collections/" + collection_id, {},
+        {session_cookie}, jwt_token);
+    send_request(sockfd, request_get);
+
+    // std::cout << request_get << std::endl;
+
+    std::string response_get = recv_response(sockfd, host);
+
+    // std::cout << response_get << std::endl;
+
+    if (!status_code(response_get, 200)) {
+        error_msg("Nu am putut obtine colectia cu id-ul " + collection_id +
+                  " pentru a obtine titlul");
+        return;
+    }
+
+    json collection_data =
+        json::parse(response_get.substr(response_get.find("\r\n\r\n") + 4));
+    std::string title = collection_data["title"].get<std::string>();
+
+    json body_data = {{"id", std::stoi(movie_id)}, {"title", title}};
 
     std::string request = compute_post_request(
         host, "/api/v1/tema/library/collections/" + collection_id + "/movies",
         body_data, {session_cookie}, jwt_token);
 
-    std::cout << request << std::endl;
-
     send_request(sockfd, request);
     std::string response = recv_response(sockfd, host);
 
-    std::cout << response << std::endl;
+    // std::cout << response << std::endl;
 
     if (status_code(response, 201)) {
         success_msg("Filmul a fost adaugat la colectie");
@@ -697,11 +720,11 @@ int main() {
     // delete_movie(sockfd, host, user_session_cookie, jwt_token);
     // update_movie(sockfd, host, user_session_cookie, jwt_token);
     // get_collections(sockfd, host, user_session_cookie, jwt_token);
-    // get_collection(sockfd, host, user_session_cookie, jwt_token); //
+    get_collection(sockfd, host, user_session_cookie, jwt_token);
     // TODO: needs to be tested
     // add_collection(sockfd, host, user_session_cookie, jwt_token);
     // delete_collection(sockfd, host, user_session_cookie, jwt_token);
-    add_movie_to_collection(sockfd, host, user_session_cookie, jwt_token);
+    // add_movie_to_collection(sockfd, host, user_session_cookie, jwt_token);
     close_conn(sockfd);
     return 0;
 }
