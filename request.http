@@ -24,6 +24,13 @@ Content-Type: application/json
 Cookie: session=.eJyrVkpMyc3Miy8tTi2Kz0xRsjI0M9FRKsrPSVWyUgIJKumAqbzEXJiIoVItAPd3EgI.aCDSVQ.IPDMd6fVFrMD-YUMG0GVW3Oln9I
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyMSIsImRvbSI6MTY0LCJpYXQiOjE3NDY5ODE1MTcuMTIzMzkxLCJleHAiOjE3NDY5ODIxMTcuMTIzMzh9.sQZyT6WXSnMwYOdw6ScCMNHSTcEMAPfzq2I4uVon8Y8
 
-
-
 ###
+
+POST /api/v1/tema/library/collections HTTP/1.1
+Host: 63.32.125.183:8081
+Content-Type: application/json
+Content-Length: 63
+Cookie: session=.eJyrVkpMyc3Miy8tTi2Kz0xRsjI0M9FRKsrPSVWyUgIJKumAqbzEXJiIoVItAPd3EgI.aCEEaw.zm5t0oy_rhol5qfqtdSa-JwOiro
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyMSIsImRvbSI6MTY0LCJpYXQiOjE3NDY5OTUzMzEuOTQwNDIyLCJleHAiOjE3NDY5OTU5MzEuOTQwNDExfQ.a56BrnybAXijOUbitwXFvKD65zOuAn72WC-gAECHh_A
+
+{"title":"collection 3"}

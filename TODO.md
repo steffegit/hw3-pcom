@@ -6,12 +6,12 @@
 - [x] login - efectuează autentificarea pentru utilizator normal
 - [x] get_access - cere acces pentru colectia de filme
 - [x] get_movies - cere toate filmele de pe server
-- [ ] get_movie - cere informaţie despre un film
-- [ ] add_movie - adaugă un film
-- [ ] delete_movie - șterge un film
-- [ ] update_movie - actualizeaza datele unui film
-- [ ] get_collections - cere toate colecțiile de filme de pe server
-- [ ] get_collection - cere informaţie despre o colecție de filme
+- [x] get_movie - cere informaţie despre un film
+- [x] add_movie - adaugă un film
+- [x] delete_movie - șterge un film
+- [x] update_movie - actualizeaza datele unui film
+- [x] get_collections - cere toate colecțiile de filme de pe server
+- [x] get_collection - cere informaţie despre o colecție de filme
 - [ ] add_collection - adaugă o colecție de filme
 - [ ] delete_collection - șterge o colecție de filme
 - [ ] add_movie_to_collection - adaugă un film intr-o colecție
