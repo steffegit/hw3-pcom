@@ -69,6 +69,12 @@ std::string recv_response(int& sockfd, std::string host) {
     size_t content_length = 0;
     bool connection_closed = false;
 
+    if (sockfd == -1) {
+        std::string IP = host.substr(0, host.find(":"));
+        int PORT = std::stoi(host.substr(host.find(":") + 1));
+        sockfd = open_conn(IP, PORT, AF_INET, SOCK_STREAM, 0);
+    }
+
     // Check if socket is still valid
     int err = 0;
     socklen_t len = sizeof(err);
@@ -131,10 +137,9 @@ std::string recv_response(int& sockfd, std::string host) {
 
     // if closed, reopen the connection
     if (connection_closed) {
+        shutdown(sockfd, SHUT_RDWR);
         close(sockfd);
-        std::string IP = host.substr(0, host.find(":"));
-        int PORT = std::stoi(host.substr(host.find(":") + 1));
-        sockfd = open_conn(IP, PORT, AF_INET, SOCK_STREAM, 0);
+        sockfd = -1;
     }
 
     return buffer;

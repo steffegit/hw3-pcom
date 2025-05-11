@@ -1,4 +1,5 @@
 #include <sys/socket.h>
+// #include <charconv> -- maybe use this instead of stoi
 #include <iostream>
 #include <limits>
 #include <string>
@@ -533,8 +534,7 @@ void get_collection(int& sockfd,
 // add_collection -> primeste doar titlu, din care iau ID-ul colectiei
 // in functie de numarul de filme, apelez add_movie_to_collection
 
-void add_collection_movie_helper() {}
-
+// TODO: come back here
 void add_collection(int& sockfd,
                     std::string host,
                     std::string session_cookie,
@@ -603,6 +603,74 @@ void add_collection(int& sockfd,
     }
 }
 
+void delete_collection(int& sockfd,
+                       std::string host,
+                       std::string session_cookie,
+                       std::string jwt_token) {
+    std::string collection_id;
+    std::cout << "id=";
+    std::cin >> collection_id;
+
+    if (!std::all_of(collection_id.begin(), collection_id.end(), ::isdigit)) {
+        error_msg("Id-ul colectiei trebuie sa fie un numar");
+        return;
+    }
+
+    std::string request = compute_delete_request(
+        host, "/api/v1/tema/library/collections/" + collection_id,
+        {session_cookie}, jwt_token);
+
+    send_request(sockfd, request);
+    std::string response = recv_response(sockfd, host);
+
+    if (status_code(response, 200) || status_code(response, 204)) {
+        success_msg("Colectia a fost stearsa cu succes");
+    } else {
+        error_msg("Nu am putut sterge colectia cu id-ul " + collection_id);
+    }
+}
+
+void add_movie_to_collection(int& sockfd,
+                             std::string host,
+                             std::string session_cookie,
+                             std::string jwt_token) {
+    std::string collection_id;
+    std::cout << "id=";
+    std::cin >> collection_id;
+
+    if (!std::all_of(collection_id.begin(), collection_id.end(), ::isdigit)) {
+        error_msg("Id-ul colectiei trebuie sa fie un numar");
+        return;
+    }
+
+    std::string movie_id;
+    std::cout << "movie_id=";
+    std::cin >> movie_id;
+
+    if (!std::all_of(movie_id.begin(), movie_id.end(), ::isdigit)) {
+        error_msg("Id-ul filmului trebuie sa fie un numar");
+        return;
+    }
+    json body_data = {{"id", std::stoi(movie_id)}};
+
+    std::string request = compute_post_request(
+        host, "/api/v1/tema/library/collections/" + collection_id + "/movies",
+        body_data, {session_cookie}, jwt_token);
+
+    std::cout << request << std::endl;
+
+    send_request(sockfd, request);
+    std::string response = recv_response(sockfd, host);
+
+    std::cout << response << std::endl;
+
+    if (status_code(response, 201)) {
+        success_msg("Filmul a fost adaugat la colectie");
+    } else {
+        error_msg("Nu am putut adauga filmul la colectie");
+    }
+}
+
 int main() {
     std::string IP = "63.32.125.183";
     int PORT = 8081;
@@ -628,10 +696,12 @@ int main() {
     // get_movie(sockfd, host, user_session_cookie, jwt_token);
     // delete_movie(sockfd, host, user_session_cookie, jwt_token);
     // update_movie(sockfd, host, user_session_cookie, jwt_token);
-    get_collections(sockfd, host, user_session_cookie, jwt_token);
-    // get_collection(sockfd, host, user_session_cookie, jwt_token); // TODO:
-    // needs to be tested
-    add_collection(sockfd, host, user_session_cookie, jwt_token);
+    // get_collections(sockfd, host, user_session_cookie, jwt_token);
+    // get_collection(sockfd, host, user_session_cookie, jwt_token); //
+    // TODO: needs to be tested
+    // add_collection(sockfd, host, user_session_cookie, jwt_token);
+    // delete_collection(sockfd, host, user_session_cookie, jwt_token);
+    add_movie_to_collection(sockfd, host, user_session_cookie, jwt_token);
     close_conn(sockfd);
     return 0;
 }
