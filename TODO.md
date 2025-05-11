@@ -13,10 +13,8 @@
 - [x] get_collections - cere toate colecțiile de filme de pe server
 - [x] get_collection - cere informaţie despre o colecție de filme
 - [ ] add_collection - adaugă o colecție de filme
-- [ ] delete_collection - șterge o colecție de filme
-- [ ] add_movie_to_collection - adaugă un film intr-o colecție
+- [x] delete_collection - șterge o colecție de filme
+- [x] add_movie_to_collection - adaugă un film intr-o colecție
 - [ ] delete_movie_from_collection - șterge un film dintr-o colecție
 - [ ] logout - efectueaza delogarea utilizatorului
 - [ ] exit - efectueaza ieșirea din program
-
-fiecare functie ar trb sa primeasca ce fel de content-type asteapta (nu e neaparat)
