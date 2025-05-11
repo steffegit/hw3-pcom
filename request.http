@@ -1,0 +1,6 @@
+POST /api/v1/tema/user/login HTTP/1.1
+Host: 63.32.125.183:8081
+Content-Type: application/json
+Content-Length: 71
+
+{"admin_username":"stefan.gatej","password":"pass1","username":"user1"}

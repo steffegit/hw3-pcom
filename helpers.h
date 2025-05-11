@@ -24,3 +24,4 @@ int open_conn(std::string host,
 void close_conn(int sockfd);
 void send_request(int sockfd, const std::string& message);
 std::string recv_response(int& sockfd, std::string host);
+std::string recv_response_old(int& sockfd, std::string host);

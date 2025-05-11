@@ -117,10 +117,14 @@ std::string recv_response(int& sockfd, std::string host) {
 
     // if closed, reopen the connection
     if (connection_closed) {
-        close_conn(sockfd);
+        std::cout << "Connection closed, reopening..."
+                  << std::endl;  // TODO: REMOVE THIS !!! DEBUG ONLY
+        close(sockfd);
         // FIXME: this is a hack, i need to find a better way to do this
         std::string IP = host.substr(0, host.find(":"));
         int PORT = std::stoi(host.substr(host.find(":") + 1));
+        std::cout << "Reopening connection to " << IP << ":" << PORT
+                  << std::endl;  // TODO: REMOVE THIS !!! DEBUG ONLY
         sockfd = open_conn(IP, PORT, AF_INET, SOCK_STREAM, 0);
     }
 
