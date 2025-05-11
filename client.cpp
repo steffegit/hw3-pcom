@@ -176,9 +176,9 @@ void logout_admin(int& sockfd, std::string host, std::string& session_cookie) {
         success_msg("Adminul a fost delogat cu succes");
 
         // reset connection
-        close(sockfd);
-        // FIXME: THIS NEEDS TO BE DONE BECAUSE LOGOUT send a
+        // IMPORTANT: THIS NEEDS TO BE DONE BECAUSE LOGOUT send a
         // "Connection: keep-alive" header
+        close(sockfd);
         std::string IP = host.substr(0, host.find(":"));
         int PORT = std::stoi(host.substr(host.find(":") + 1));
         sockfd = open_conn(IP, PORT, AF_INET, SOCK_STREAM, 0);
@@ -205,8 +205,6 @@ void login(int& sockfd, std::string host, std::string& session_cookie) {
 
     send_request(sockfd, request);
     std::string response = recv_response(sockfd, host);
-
-    std::cout << response << std::endl;  // TODO: REMOVE THIS !!! DEBUG ONLY
 
     if (status_code(response, 200)) {
         success_msg("Login cu succes");
@@ -257,8 +255,6 @@ void get_access(int& sockfd,
     }
 }
 
-// TODO: revino aici, trebuie sa faci formatul ca aici:
-// https://pcom.pages.upb.ro/enunt-tema4/client.html#7-get_movies-10p
 void get_movies(int& sockfd,
                 std::string host,
                 std::string session_cookie,
@@ -269,10 +265,24 @@ void get_movies(int& sockfd,
     send_request(sockfd, request);
     std::string response = recv_response(sockfd, host);
 
-    std::cout << response << std::endl;  // TODO: REMOVE THIS !!! DEBUG ONLY
-
     if (status_code(response, 200)) {
-        success_msg("Filmele au fost obtinute cu succes");
+        // Extract the JSON body from the response
+        size_t body_start = response.find("\r\n\r\n") + 4;
+        std::string body = response.substr(body_start);
+
+        try {
+            json response_json = json::parse(body);
+            std::cout << "SUCCESS: Lista filmelor" << std::endl;
+
+            int count = 1;
+            for (const auto& movie : response_json["movies"]) {
+                std::cout << "#" << count << " "
+                          << movie["title"].get<std::string>() << std::endl;
+                count++;
+            }
+        } catch (const std::exception& e) {
+            error_msg("Nu am putut parsa raspunsul JSON");
+        }
     } else {
         error_msg("Nu am putut obtine filmele");
     }
@@ -300,16 +310,24 @@ void get_movie(int& sockfd,
 
     std::string response = recv_response(sockfd, host);
 
-    std::cout << response << std::endl;  // TODO: REMOVE THIS !!! DEBUG ONLY
-
     if (status_code(response, 200)) {
         success_msg("Filmul a fost obtinut cu succes");
+
+        // Extract the JSON body from the response
+        size_t body_start = response.find("\r\n\r\n") + 4;
+        std::string body = response.substr(body_start);
+
+        try {
+            json response_json = json::parse(body);
+            std::cout << response_json.dump(2) << std::endl;
+        } catch (const std::exception& e) {
+            error_msg("Nu am putut parsa raspunsul JSON");
+        }
     } else {
         error_msg("Nu am putut obtine filmul cu id-ul " + movie_id);
     }
 }
 
-// TODO: server error here, come back to this
 void add_movie(int& sockfd,
                std::string host,
                std::string session_cookie,
@@ -356,21 +374,16 @@ void add_movie(int& sockfd,
         compute_post_request(host, "/api/v1/tema/library/movies", body_data,
                              {session_cookie}, jwt_token);
 
-    std::cout << request << std::endl;  // TODO: REMOVE THIS !!! DEBUG ONLY
-
     send_request(sockfd, request);
     std::string response = recv_response(sockfd, host);
 
-    std::cout << response << std::endl;  // TODO: REMOVE THIS !!! DEBUG ONLY
-
-    if (status_code(response, 201)) {
+    if (status_code(response, 201)) {  // 201 = CREATED
         success_msg("Filmul a fost adaugat cu succes");
     } else {
         error_msg("Nu am putut adauga filmul");
     }
 }
 
-// TODO: test this
 void delete_movie(int& sockfd,
                   std::string host,
                   std::string session_cookie,
@@ -391,8 +404,6 @@ void delete_movie(int& sockfd,
 
     send_request(sockfd, request);
     std::string response = recv_response(sockfd, host);
-
-    std::cout << response << std::endl;  // TODO: REMOVE THIS !!! DEBUG ONLY
 
     if (status_code(response, 200) || status_code(response, 204)) {
         success_msg("Filmul a fost sters cu succes");
@@ -419,6 +430,7 @@ void update_movie(int& sockfd,
     int year;
     float rating;
 
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     std::cout << "title=";
     std::getline(std::cin, title);
 
@@ -457,8 +469,6 @@ void update_movie(int& sockfd,
     send_request(sockfd, request);
     std::string response = recv_response(sockfd, host);
 
-    std::cout << response << std::endl;  // TODO: REMOVE THIS !!! DEBUG ONLY
-
     if (status_code(response, 200) || status_code(response, 204)) {
         success_msg("Filmul a fost actualizat cu succes");
     } else {
@@ -475,6 +485,8 @@ void get_collections(int& sockfd,
     std::string request =
         compute_get_request(host, "/api/v1/tema/library/collections", {},
                             {session_cookie}, jwt_token);
+
+    std::cout << request << std::endl;
 
     send_request(sockfd, request);
     std::string response = recv_response(sockfd, host);
@@ -569,16 +581,19 @@ int main() {
     // login_admin(sockfd, host, session_cookie);
 
     // TODO: REMOVE THIS
-    DEBUG_login_admin(sockfd, host, admin_session_cookie);
+    // DEBUG_login_admin(sockfd, host, admin_session_cookie);
     // add_user(sockfd, host, admin_session_cookie);
-    get_users(sockfd, host, admin_session_cookie);
-    logout_admin(sockfd, host, admin_session_cookie);
+    // get_users(sockfd, host, admin_session_cookie);
+    // logout_admin(sockfd, host, admin_session_cookie);
 
     login(sockfd, host, user_session_cookie);
     get_access(sockfd, host, user_session_cookie, jwt_token);
-    add_movie(sockfd, host, user_session_cookie, jwt_token);
-    get_movies(sockfd, host, user_session_cookie, jwt_token);
-    get_movie(sockfd, host, user_session_cookie, jwt_token);
+    // add_movie(sockfd, host, user_session_cookie, jwt_token);
+    // get_movies(sockfd, host, user_session_cookie, jwt_token);
+    // get_movie(sockfd, host, user_session_cookie, jwt_token);
+    // delete_movie(sockfd, host, user_session_cookie, jwt_token);
+    // update_movie(sockfd, host, user_session_cookie, jwt_token);
+    get_collections(sockfd, host, user_session_cookie, jwt_token);
     close_conn(sockfd);
     return 0;
 }

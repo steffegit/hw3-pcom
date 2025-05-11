@@ -69,9 +69,21 @@ std::string recv_response(int& sockfd, std::string host) {
     size_t content_length = 0;
     bool connection_closed = false;
 
+    // Check if socket is still valid
+    int err = 0;
+    socklen_t len = sizeof(err);
+    if (getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &err, &len) < 0 || err != 0) {
+        connection_closed = true;
+    }
+
     do {
         ssize_t bytes = read(sockfd, response.data(), BUFLEN);
         if (bytes < 0) {
+            if (errno == ECONNRESET || errno == EPIPE) {
+                connection_closed = true;
+                break;
+            }
+
             error("ERROR reading response from socket");
         }
         if (bytes == 0) {
@@ -84,7 +96,7 @@ std::string recv_response(int& sockfd, std::string host) {
 
         header_end = buffer.find(HEADER_TERMINATOR);
         if (header_end != std::string::npos) {
-            // Connection: close => i need to reopen the connection
+            // Connection: close -> i need to reopen the connection
             if (buffer.find("Connection: close") != std::string::npos) {
                 connection_closed = true;
             }
@@ -108,7 +120,9 @@ std::string recv_response(int& sockfd, std::string host) {
         while (buffer.length() < total && !connection_closed) {
             ssize_t bytes = read(sockfd, response.data(), BUFLEN);
             if (bytes <= 0) {
-                connection_closed = true;
+                if (bytes < 0 && (errno == ECONNRESET || errno == EPIPE)) {
+                    connection_closed = true;
+                }
                 break;
             }
             buffer.append(response.data(), static_cast<size_t>(bytes));
@@ -117,14 +131,9 @@ std::string recv_response(int& sockfd, std::string host) {
 
     // if closed, reopen the connection
     if (connection_closed) {
-        std::cout << "Connection closed, reopening..."
-                  << std::endl;  // TODO: REMOVE THIS !!! DEBUG ONLY
         close(sockfd);
-        // FIXME: this is a hack, i need to find a better way to do this
         std::string IP = host.substr(0, host.find(":"));
         int PORT = std::stoi(host.substr(host.find(":") + 1));
-        std::cout << "Reopening connection to " << IP << ":" << PORT
-                  << std::endl;  // TODO: REMOVE THIS !!! DEBUG ONLY
         sockfd = open_conn(IP, PORT, AF_INET, SOCK_STREAM, 0);
     }
 

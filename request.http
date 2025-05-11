@@ -4,3 +4,26 @@ Content-Type: application/json
 Content-Length: 71
 
 {"admin_username":"stefan.gatej","password":"pass1","username":"user1"}
+
+###
+
+POST /api/v1/tema/library/movies HTTP/1.1
+Host: 63.32.125.183:8081
+Content-Type: application/json
+Content-Length: 92
+Cookie: session=.eJyrVkpMyc3Miy8tTi2Kz0xRsjI0M9FRKsrPSVWyUgIJKumAqbzEXJiIoVItAPd3EgI.aCDG0w.MIv_51y5j3CCVTafH3vAdOAxHv8
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyMSIsImRvbSI6MTY0LCJpYXQiOjE3NDY5Nzg1NjUuMzkxMzI2LCJleHAiOjE3NDY5NzkxNjUuMzkxMzEzfQ.Ek7-ILiPqDvV3BF6UCrIwo3FxEwhZRV4ZS5wHVxAPfQ
+
+{"description":"scream dream","rating":9.899999618530273,"title":"inception 30","year":2023}
+
+###
+
+GET /api/v1/tema/library/movies/1209 HTTP/1.1
+Host: 63.32.125.183:8081
+Content-Type: application/json
+Cookie: session=.eJyrVkpMyc3Miy8tTi2Kz0xRsjI0M9FRKsrPSVWyUgIJKumAqbzEXJiIoVItAPd3EgI.aCDSVQ.IPDMd6fVFrMD-YUMG0GVW3Oln9I
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyMSIsImRvbSI6MTY0LCJpYXQiOjE3NDY5ODE1MTcuMTIzMzkxLCJleHAiOjE3NDY5ODIxMTcuMTIzMzh9.sQZyT6WXSnMwYOdw6ScCMNHSTcEMAPfzq2I4uVon8Y8
+
+
+
+###

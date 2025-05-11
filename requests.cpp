@@ -48,7 +48,6 @@ std::string compute_get_request(const std::string& host,
 
     message << "GET " << path << " HTTP/1.1\r\n";
     message << "Host: " << host << "\r\n";
-    // message << "Connection: keep-alive\r\n";
     message << "Content-Type: application/json\r\n";
 
     if (!body_data.empty()) {
@@ -64,7 +63,9 @@ std::string compute_get_request(const std::string& host,
         message << "\r\n";
     }
 
-    message << "Authorization: Bearer " << jwt_token << "\r\n";
+    if (!jwt_token.empty()) {
+        message << "Authorization: Bearer " << jwt_token << "\r\n";
+    }
 
     message << "\r\n";
 
