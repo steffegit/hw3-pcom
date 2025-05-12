@@ -183,13 +183,16 @@ void logout_admin(int& sockfd, std::string host, std::string& session_cookie) {
         session_cookie = "";  // clear the cookie
         success_msg("Adminul a fost delogat cu succes");
 
+        // TODO: WATCH OUT HERE (removed for now)
+
         // reset connection
         // IMPORTANT: THIS NEEDS TO BE DONE BECAUSE LOGOUT send a
         // "Connection: keep-alive" header
-        close_conn(sockfd);
-        std::string IP = host.substr(0, host.find(":"));
-        int PORT = std::stoi(host.substr(host.find(":") + 1));
-        sockfd = open_conn(IP, PORT, AF_INET, SOCK_STREAM, 0);
+
+        // close_conn(sockfd);
+        // std::string IP = host.substr(0, host.find(":"));
+        // int PORT = std::stoi(host.substr(host.find(":") + 1));
+        // sockfd = open_conn(IP, PORT, AF_INET, SOCK_STREAM, 0);
     } else {
         error_msg("Nu am putut deloga adminul");
     }
@@ -285,12 +288,22 @@ void get_movies(int& sockfd,
             // Clear the map before populating it
             movie_id_to_title_and_id.clear();
 
-            int count = 1;
+            // Store movies in a vector for sorting
+            std::vector<std::pair<int, std::string>> movies_to_sort;
             for (const auto& movie : response_json["movies"]) {
-                std::cout << "#" << count << " "
-                          << movie["title"].get<std::string>() << std::endl;
-                movie_id_to_title_and_id[count] = std::make_pair(
-                    movie["title"].get<std::string>(), movie["id"].get<int>());
+                movies_to_sort.push_back({movie["id"].get<int>(),
+                                          movie["title"].get<std::string>()});
+            }
+
+            // Sort by server ID (ascending)
+            std::sort(movies_to_sort.begin(), movies_to_sort.end());
+
+            // Display and store in map in sorted order
+            int count = 1;
+            for (const auto& movie : movies_to_sort) {
+                std::cout << "#" << count << " " << movie.second << std::endl;
+                movie_id_to_title_and_id[count] =
+                    std::make_pair(movie.second, movie.first);
                 count++;
             }
         } catch (const std::exception& e) {
@@ -523,14 +536,28 @@ void get_collections(int& sockfd,
             // Clear the map before populating it
             collection_id_to_title_and_id_and_owner.clear();
 
-            int count = 1;
+            // Store collections in a vector for sorting
+            std::vector<std::tuple<int, std::string, std::string>>
+                collections_to_sort;
             for (const auto& collection : response_json["collections"]) {
-                std::string title = collection["title"].get<std::string>();
-                int id = collection["id"].get<int>();
-                std::string owner = collection["owner"].get<std::string>();
-                std::cout << "#" << count << ": " << title << std::endl;
+                collections_to_sort.push_back(
+                    {collection["id"].get<int>(),
+                     collection["title"].get<std::string>(),
+                     collection["owner"].get<std::string>()});
+            }
+
+            // Sort by server ID (ascending)
+            std::sort(collections_to_sort.begin(), collections_to_sort.end());
+
+            // Display and store in map in sorted order
+            int count = 1;
+            for (const auto& collection : collections_to_sort) {
+                std::cout << "#" << count << ": " << std::get<1>(collection)
+                          << std::endl;
                 collection_id_to_title_and_id_and_owner[count] =
-                    std::make_tuple(title, id, owner);
+                    std::make_tuple(std::get<1>(collection),
+                                    std::get<0>(collection),
+                                    std::get<2>(collection));
                 count++;
             }
         } catch (const std::exception& e) {
