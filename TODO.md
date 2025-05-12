@@ -18,3 +18,5 @@
 - [x] delete_movie_from_collection - șterge un film dintr-o colecție
 - [x] logout - efectueaza delogarea utilizatorului
 - [x] exit - efectueaza ieșirea din program
+test_1747035318_xthl5W
+b1b742ed84fc221bd984
