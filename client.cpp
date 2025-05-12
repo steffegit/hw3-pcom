@@ -9,9 +9,9 @@
 
 using json = nlohmann::json;
 
-std::unordered_map<int, std::pair<std::string, int>> movie_id_to_title_and_id;
-std::unordered_map<int, std::tuple<std::string, int, std::string>>
-    collection_id_to_title_and_id_and_owner;
+std::unordered_map<int, std::string> movie_id_to_title;
+std::unordered_map<int, std::pair<std::string, std::string>>
+    collection_id_to_title_and_owner;
 
 int running = 1;
 
@@ -125,12 +125,10 @@ void get_users(int& sockfd, std::string host, std::string session_cookie) {
             json response_json = json::parse(body);
             std::cout << "SUCCESS: Lista utilizatorilor" << std::endl;
 
-            int count = 1;
             for (const auto& user : response_json["users"]) {
-                std::cout << "#" << count << " "
+                std::cout << "#" << user["id"].get<int>() << " "
                           << user["username"].get<std::string>() << ":"
                           << user["password"].get<std::string>() << std::endl;
-                count++;
             }
         } catch (const std::exception& e) {
             error_msg("Nu am putut parsa raspunsul JSON");
@@ -286,7 +284,7 @@ void get_movies(int& sockfd,
             std::cout << "SUCCESS: Lista filmelor" << std::endl;
 
             // Clear the map before populating it
-            movie_id_to_title_and_id.clear();
+            movie_id_to_title.clear();
 
             // Store movies in a vector for sorting
             std::vector<std::pair<int, std::string>> movies_to_sort;
@@ -299,12 +297,10 @@ void get_movies(int& sockfd,
             std::sort(movies_to_sort.begin(), movies_to_sort.end());
 
             // Display and store in map in sorted order
-            int count = 1;
             for (const auto& movie : movies_to_sort) {
-                std::cout << "#" << count << " " << movie.second << std::endl;
-                movie_id_to_title_and_id[count] =
-                    std::make_pair(movie.second, movie.first);
-                count++;
+                std::cout << "#" << movie.first << " " << movie.second
+                          << std::endl;
+                movie_id_to_title[movie.first] = movie.second;
             }
         } catch (const std::exception& e) {
             error_msg("Nu am putut parsa raspunsul JSON");
@@ -328,15 +324,9 @@ void get_movie(int& sockfd,
         return;
     }
 
-    int movie_id_int = std::stoi(movie_id);
-
-    int actual_movie_id = movie_id_to_title_and_id[movie_id_int].second;
-
-    std::cout << "actual_movie_id: " << actual_movie_id << std::endl;
-
-    std::string request = compute_get_request(
-        host, "/api/v1/tema/library/movies/" + std::to_string(actual_movie_id),
-        {}, {session_cookie}, jwt_token);
+    std::string request =
+        compute_get_request(host, "/api/v1/tema/library/movies/" + movie_id, {},
+                            {session_cookie}, jwt_token);
 
     send_request(sockfd, host, request);
     std::string response = recv_response(sockfd, host);
@@ -429,12 +419,9 @@ void delete_movie(int& sockfd,
         return;
     }
 
-    int movie_id_int = std::stoi(movie_id);
-    int actual_movie_id = movie_id_to_title_and_id[movie_id_int].second;
-
-    std::string request = compute_delete_request(
-        host, "/api/v1/tema/library/movies/" + std::to_string(actual_movie_id),
-        {session_cookie}, jwt_token);
+    std::string request =
+        compute_delete_request(host, "/api/v1/tema/library/movies/" + movie_id,
+                               {session_cookie}, jwt_token);
 
     send_request(sockfd, host, request);
     std::string response = recv_response(sockfd, host);
@@ -459,9 +446,6 @@ void update_movie(int& sockfd,
         error_msg("Id-ul filmului trebuie sa fie un numar");
         return;
     }
-
-    int movie_id_int = std::stoi(movie_id);
-    int actual_movie_id = movie_id_to_title_and_id[movie_id_int].second;
 
     std::string title, description;
     int year;
@@ -499,9 +483,9 @@ void update_movie(int& sockfd,
                       {"description", description},
                       {"rating", rating}};
 
-    std::string request = compute_put_request(
-        host, "/api/v1/tema/library/movies/" + std::to_string(actual_movie_id),
-        body_data, {session_cookie}, jwt_token);
+    std::string request =
+        compute_put_request(host, "/api/v1/tema/library/movies/" + movie_id,
+                            body_data, {session_cookie}, jwt_token);
 
     send_request(sockfd, host, request);
     std::string response = recv_response(sockfd, host);
@@ -534,31 +518,25 @@ void get_collections(int& sockfd,
             std::cout << "SUCCESS: Lista colectiilor" << std::endl;
 
             // Clear the map before populating it
-            collection_id_to_title_and_id_and_owner.clear();
+            collection_id_to_title_and_owner.clear();
 
             // Store collections in a vector for sorting
-            std::vector<std::tuple<int, std::string, std::string>>
-                collections_to_sort;
+            std::vector<std::pair<int, std::string>> collections_to_sort;
             for (const auto& collection : response_json["collections"]) {
                 collections_to_sort.push_back(
                     {collection["id"].get<int>(),
-                     collection["title"].get<std::string>(),
-                     collection["owner"].get<std::string>()});
+                     collection["title"].get<std::string>()});
             }
 
             // Sort by server ID (ascending)
             std::sort(collections_to_sort.begin(), collections_to_sort.end());
 
             // Display and store in map in sorted order
-            int count = 1;
             for (const auto& collection : collections_to_sort) {
-                std::cout << "#" << count << ": " << std::get<1>(collection)
-                          << std::endl;
-                collection_id_to_title_and_id_and_owner[count] =
-                    std::make_tuple(std::get<1>(collection),
-                                    std::get<0>(collection),
-                                    std::get<2>(collection));
-                count++;
+                std::cout << "#" << collection.first << ": "
+                          << collection.second << std::endl;
+                collection_id_to_title_and_owner[collection.first] =
+                    std::make_pair(collection.second, collection.first);
             }
         } catch (const std::exception& e) {
             error_msg("Nu am putut parsa raspunsul JSON");
@@ -582,19 +560,9 @@ void get_collection(int& sockfd,
         return;
     }
 
-    int collection_id_int = std::stoi(collection_id);
-    std::string title =
-        std::get<0>(collection_id_to_title_and_id_and_owner[collection_id_int]);
-    int actual_collection_id =
-        std::get<1>(collection_id_to_title_and_id_and_owner[collection_id_int]);
-    std::string owner_name =
-        std::get<2>(collection_id_to_title_and_id_and_owner[collection_id_int]);
-
-    std::string request =
-        compute_get_request(host,
-                            "/api/v1/tema/library/collections/" +
-                                std::to_string(actual_collection_id),
-                            {}, {session_cookie}, jwt_token);
+    std::string request = compute_get_request(
+        host, "/api/v1/tema/library/collections/" + collection_id, {},
+        {session_cookie}, jwt_token);
 
     send_request(sockfd, host, request);
     std::string response = recv_response(sockfd, host);
@@ -605,18 +573,23 @@ void get_collection(int& sockfd,
 
         try {
             json response_json = json::parse(body);
-            std::cout << "title: " << title << std::endl;
-            std::cout << "owner: " << owner_name << std::endl;
 
-            for (const auto& movie : response_json["movies"]) {
-                // reverse lookup
-                for (const auto& pair : movie_id_to_title_and_id) {
-                    if (pair.second.second == movie["id"].get<int>()) {
-                        std::cout << "#" << pair.first << ": ";
-                        break;
+            // Get title and owner from the response JSON directly
+            std::string title = response_json["title"].get<std::string>();
+            std::string owner = response_json["owner"].get<std::string>();
+
+            std::cout << "title: " << title << std::endl;
+            std::cout << "owner: " << owner << std::endl;
+
+            if (response_json.contains("movies") &&
+                response_json["movies"].is_array()) {
+                for (const auto& movie : response_json["movies"]) {
+                    if (movie.contains("id") && movie.contains("title")) {
+                        std::cout << "#" << movie["id"].get<int>() << ": "
+                                  << movie["title"].get<std::string>()
+                                  << std::endl;
                     }
                 }
-                std::cout << movie["title"].get<std::string>() << std::endl;
             }
 
             success_msg("Colectia a fost obtinuta cu succes");
@@ -649,25 +622,7 @@ void _add_collection_add_movie(int& sockfd,
     send_request(sockfd, host, request);
 
     std::string response = recv_response(sockfd, host);
-
-    // if (status_code(response, 200) || status_code(response, 201)) {
-    //     success_msg("Filmul a fost adaugat la colectie");
-    // } else {
-    //     error_msg("Nu am putut adauga filmul la colectie");
-    // }
 }
-
-// deci aparent ei vor sa dau get_movies, sa imi fac eu mapul ala cu movies gen:
-// #1 ceva
-// #2 altceva
-// #3 cevaaltceva
-// si apoi sa dau add_collection cu un json care sa aiba un camp movie_idx care
-// e un vector de intregi care reprezinta indexul in lista de filme
-// deci trebuie sa fac un get_movies, sa fac un map<int, std::string> (id,
-// nume_film), si sa folosesc asta la add_collection
-
-// sau de fapt ar fi bine sa am ceva gen map<int, std::pair<std::string, int>>
-// (id, std::pair<nume_film, id_film>)
 
 void add_collection(int& sockfd,
                     std::string host,
@@ -743,9 +698,8 @@ void add_collection(int& sockfd,
 
     // Add all movies to collection
     for (int movie_id : movie_ids) {
-        int actual_movie_id = movie_id_to_title_and_id[movie_id].second;
         _add_collection_add_movie(sockfd, host, session_cookie, jwt_token,
-                                  collection_id, title, actual_movie_id);
+                                  collection_id, title, movie_id);
     }
 
     // Get final collection details to display
@@ -766,11 +720,9 @@ void add_collection(int& sockfd,
         std::cout << "owner: " << collection_data["owner"].get<std::string>()
                   << std::endl;
 
-        int count = 1;
         for (const auto& movie : collection_data["movies"]) {
-            std::cout << "#" << count << ": "
+            std::cout << "#" << movie["id"].get<int>() << ": "
                       << movie["title"].get<std::string>() << std::endl;
-            count++;
         }
     }
 
@@ -791,15 +743,9 @@ void delete_collection(int& sockfd,
         return;
     }
 
-    int collection_id_int = std::stoi(collection_id);
-    int actual_collection_id =
-        std::get<1>(collection_id_to_title_and_id_and_owner[collection_id_int]);
-
-    std::string request =
-        compute_delete_request(host,
-                               "/api/v1/tema/library/collections/" +
-                                   std::to_string(actual_collection_id),
-                               {session_cookie}, jwt_token);
+    std::string request = compute_delete_request(
+        host, "/api/v1/tema/library/collections/" + collection_id,
+        {session_cookie}, jwt_token);
 
     send_request(sockfd, host, request);
     std::string response = recv_response(sockfd, host);
@@ -833,19 +779,10 @@ void add_movie_to_collection(int& sockfd,
         return;
     }
 
-    int movie_id_int = std::stoi(movie_id);
-    int actual_movie_id = movie_id_to_title_and_id[movie_id_int].second;
-
-    int collection_id_int = std::stoi(collection_id);
-    int actual_collection_id =
-        std::get<1>(collection_id_to_title_and_id_and_owner[collection_id_int]);
-
     // Get collection details
-    std::string request_get =
-        compute_get_request(host,
-                            "/api/v1/tema/library/collections/" +
-                                std::to_string(actual_collection_id),
-                            {}, {session_cookie}, jwt_token);
+    std::string request_get = compute_get_request(
+        host, "/api/v1/tema/library/collections/" + collection_id, {},
+        {session_cookie}, jwt_token);
 
     // std::cout << "GET Request:\n" << request_get << std::endl;
 
@@ -865,7 +802,9 @@ void add_movie_to_collection(int& sockfd,
         json::parse(response_get.substr(response_get.find("\r\n\r\n") + 4));
     std::string title = collection_data["title"].get<std::string>();
 
-    json body_data = {{"id", actual_movie_id}, {"title", title}};
+    int movie_id_int = std::stoi(movie_id);
+
+    json body_data = {{"id", movie_id_int}, {"title", title}};
 
     std::string request = compute_post_request(
         host, "/api/v1/tema/library/collections/" + collection_id + "/movies",
