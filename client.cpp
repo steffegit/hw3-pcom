@@ -2,6 +2,7 @@
 // #include <charconv> -- maybe use this instead of stoi
 #include <iostream>
 #include <limits>
+#include <map>
 #include <string>
 #include "helpers.h"
 #include "nlohmann.hpp"
@@ -9,8 +10,8 @@
 
 using json = nlohmann::json;
 
-std::unordered_map<int, std::string> movie_id_to_title;
-std::unordered_map<int, std::pair<std::string, std::string>>
+std::map<int, std::string> movie_id_to_title;
+std::map<int, std::pair<std::string, std::string>>
     collection_id_to_title_and_owner;
 
 int running = 1;
@@ -275,7 +276,6 @@ void get_movies(int& sockfd,
     std::string response = recv_response(sockfd, host);
 
     if (status_code(response, 200)) {
-        // Extract the JSON body from the response
         size_t body_start = response.find("\r\n\r\n") + 4;
         std::string body = response.substr(body_start);
 
@@ -286,21 +286,16 @@ void get_movies(int& sockfd,
             // Clear the map before populating it
             movie_id_to_title.clear();
 
-            // Store movies in a vector for sorting
-            std::vector<std::pair<int, std::string>> movies_to_sort;
+            // Store movies directly in the ordered map
             for (const auto& movie : response_json["movies"]) {
-                movies_to_sort.push_back({movie["id"].get<int>(),
-                                          movie["title"].get<std::string>()});
+                int id = movie["id"].get<int>();
+                std::string title = movie["title"].get<std::string>();
+                movie_id_to_title[id] = title;
             }
 
-            // Sort by server ID (ascending)
-            std::sort(movies_to_sort.begin(), movies_to_sort.end());
-
-            // Display and store in map in sorted order
-            for (const auto& movie : movies_to_sort) {
-                std::cout << "#" << movie.first << " " << movie.second
-                          << std::endl;
-                movie_id_to_title[movie.first] = movie.second;
+            // Display movies (automatically sorted by ID)
+            for (const auto& [id, title] : movie_id_to_title) {
+                std::cout << "#" << id << " " << title << std::endl;
             }
         } catch (const std::exception& e) {
             error_msg("Nu am putut parsa raspunsul JSON");
@@ -509,7 +504,6 @@ void get_collections(int& sockfd,
     std::string response = recv_response(sockfd, host);
 
     if (status_code(response, 200)) {
-        // Extract the JSON body from the response
         size_t body_start = response.find("\r\n\r\n") + 4;
         std::string body = response.substr(body_start);
 
@@ -520,23 +514,18 @@ void get_collections(int& sockfd,
             // Clear the map before populating it
             collection_id_to_title_and_owner.clear();
 
-            // Store collections in a vector for sorting
-            std::vector<std::pair<int, std::string>> collections_to_sort;
+            // Store collections directly in the ordered map
             for (const auto& collection : response_json["collections"]) {
-                collections_to_sort.push_back(
-                    {collection["id"].get<int>(),
-                     collection["title"].get<std::string>()});
+                int id = collection["id"].get<int>();
+                std::string title = collection["title"].get<std::string>();
+                std::string owner = collection["owner"].get<std::string>();
+                collection_id_to_title_and_owner[id] =
+                    std::make_pair(title, owner);
             }
 
-            // Sort by server ID (ascending)
-            std::sort(collections_to_sort.begin(), collections_to_sort.end());
-
-            // Display and store in map in sorted order
-            for (const auto& collection : collections_to_sort) {
-                std::cout << "#" << collection.first << ": "
-                          << collection.second << std::endl;
-                collection_id_to_title_and_owner[collection.first] =
-                    std::make_pair(collection.second, collection.first);
+            // Display collections (automatically sorted by ID)
+            for (const auto& [id, data] : collection_id_to_title_and_owner) {
+                std::cout << "#" << id << ": " << data.first << std::endl;
             }
         } catch (const std::exception& e) {
             error_msg("Nu am putut parsa raspunsul JSON");
