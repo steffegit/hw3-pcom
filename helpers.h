@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-constexpr size_t BUFLEN = 4096;
+constexpr size_t BUFLEN = 8096;
 constexpr const char* HEADER_TERMINATOR = "\r\n\r\n";
 constexpr size_t HEADER_TERMINATOR_SIZE = 4;
 constexpr const char* CONTENT_LENGTH = "Content-Length: ";

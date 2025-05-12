@@ -82,19 +82,21 @@ std::string recv_response(int& sockfd, std::string host) {
         connection_closed = true;
     }
 
+    std::cout << "DEBUG 1 - sockfd: " << sockfd << " " << connection_closed
+              << std::endl;
+
     do {
+        std::cout << "DEBUG inside - sockfd: " << sockfd << " "
+                  << connection_closed << std::endl;
         ssize_t bytes = read(sockfd, response.data(), BUFLEN);
         if (bytes < 0) {
-            if (errno == ECONNRESET || errno == EPIPE) {
-                connection_closed = true;
-                break;
-            }
-
             error("ERROR reading response from socket");
         }
         if (bytes == 0) {
             // Connection closed by server
             connection_closed = true;
+            std::cout << "Connection closed by server" << std::endl;
+            std::cout << "BUF: " << buffer << std::endl;
             break;
         }
 
@@ -105,6 +107,9 @@ std::string recv_response(int& sockfd, std::string host) {
             // Connection: close -> i need to reopen the connection
             if (buffer.find("Connection: close") != std::string::npos) {
                 connection_closed = true;
+
+                // print buffer
+                std::cout << "DEBUG buffer: " << buffer << std::endl;
             }
 
             header_end += HEADER_TERMINATOR_SIZE;
@@ -120,6 +125,9 @@ std::string recv_response(int& sockfd, std::string host) {
             }
         }
     } while (true);
+
+    std::cout << "DEBUG 2 - sockfd: " << sockfd << " " << connection_closed
+              << std::endl;
 
     if (content_length > 0) {
         size_t total = content_length + header_end;

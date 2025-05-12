@@ -44,3 +44,19 @@ Content-Length: 11
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyMSIsImRvbSI6MTY0LCJpYXQiOjE3NDcwMDAxODIuNzIyMDQyLCJleHAiOjE3NDcwMDA3ODIuNzIyMDMxfQ.GkFeodpWLKaizFHJFcZ_JgfkxIK_N02QfYLNzUVRq24
 
 {"id":1210}
+
+###
+
+DELETE /api/v1/tema/library/collections/444/movies/1208 HTTP/1.1
+Host: 63.32.125.183:8081
+Accept: application/json
+Cookie: session=.eJyrVkpMyc3Miy8tTi2Kz0xRsjI0M9FRKsrPSVWyUgIJKumAqbzEXJiIoVItAPd3EgI.aCGFEQ.TXRpIUlj6ZnXcrQraAMDjYrJNOw
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyMSIsImRvbSI6MTY0LCJpYXQiOjE3NDcwMjcyMTcuMTE3OTAxLCJleHAiOjE3NDcwMjc4MTcuMTE3ODg5fQ.T1KytKIjBhE64tIvHyUOWkPkcsHSp1Necz_x8AxAyGM
+
+###
+
+GET /api/v1/tema/library/collections/444 HTTP/1.1
+Host: 63.32.125.183:8081
+Content-Type: application/json
+Cookie: session=.eJyrVkpMyc3Miy8tTi2Kz0xRsjI0M9FRKsrPSVWyUgIJKumAqbzEXJiIoVItAPd3EgI.aCGFlQ.xorRxOBeSAV2DfwgPXgRttneXiI
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyMSIsImRvbSI6MTY0LCJpYXQiOjE3NDcwMjczNDkuNDQwMzAzLCJleHAiOjE3NDcwMjc5NDkuNDQwMjkyfQ.LOKRQGBMIyyz72Bn1irrFFvYrXx_Gnxu3HCK53Q_IlY

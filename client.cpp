@@ -150,7 +150,7 @@ void delete_user(int& sockfd, std::string host, std::string session_cookie) {
 
     std::cout << response << std::endl;
 
-    if (status_code(response, 200) || status_code(response, 204)) {
+    if (status_code(response, 200)) {
         success_msg("User sters cu succes");
     } else if (status_code(response, 404)) {
         success_msg("Userul nu exista (not found)");
@@ -406,7 +406,7 @@ void delete_movie(int& sockfd,
     send_request(sockfd, request);
     std::string response = recv_response(sockfd, host);
 
-    if (status_code(response, 200) || status_code(response, 204)) {
+    if (status_code(response, 200)) {
         success_msg("Filmul a fost sters cu succes");
     } else {
         error_msg("Nu am putut sterge filmul cu id-ul " + movie_id);
@@ -470,7 +470,7 @@ void update_movie(int& sockfd,
     send_request(sockfd, request);
     std::string response = recv_response(sockfd, host);
 
-    if (status_code(response, 200) || status_code(response, 204)) {
+    if (status_code(response, 200)) {
         success_msg("Filmul a fost actualizat cu succes");
     } else {
         error_msg("Nu am putut actualiza filmul cu id-ul " + movie_id);
@@ -623,14 +623,13 @@ void delete_collection(int& sockfd,
     send_request(sockfd, request);
     std::string response = recv_response(sockfd, host);
 
-    if (status_code(response, 200) || status_code(response, 204)) {
+    if (status_code(response, 200)) {
         success_msg("Colectia a fost stearsa cu succes");
     } else {
         error_msg("Nu am putut sterge colectia cu id-ul " + collection_id);
     }
 }
 
-// TODO: THIS NOT WORKS
 void add_movie_to_collection(int& sockfd,
                              std::string host,
                              std::string session_cookie,
@@ -660,11 +659,11 @@ void add_movie_to_collection(int& sockfd,
         {session_cookie}, jwt_token);
     send_request(sockfd, request_get);
 
-    // std::cout << request_get << std::endl;
+    std::cout << request_get << std::endl;
 
     std::string response_get = recv_response(sockfd, host);
 
-    // std::cout << response_get << std::endl;
+    std::cout << response_get << std::endl;
 
     if (!status_code(response_get, 200)) {
         error_msg("Nu am putut obtine colectia cu id-ul " + collection_id +
@@ -687,10 +686,52 @@ void add_movie_to_collection(int& sockfd,
 
     // std::cout << response << std::endl;
 
-    if (status_code(response, 201)) {
+    if (status_code(response, 200)) {
         success_msg("Filmul a fost adaugat la colectie");
     } else {
         error_msg("Nu am putut adauga filmul la colectie");
+    }
+}
+
+void delete_movie_from_collection(int& sockfd,
+                                  std::string host,
+                                  std::string session_cookie,
+                                  std::string jwt_token) {
+    std::string collection_id;
+    std::cout << "id=";
+    std::cin >> collection_id;
+
+    if (!std::all_of(collection_id.begin(), collection_id.end(), ::isdigit)) {
+        error_msg("Id-ul colectiei trebuie sa fie un numar");
+        return;
+    }
+
+    std::string movie_id;
+    std::cout << "movie_id=";
+    std::cin >> movie_id;
+
+    if (!std::all_of(movie_id.begin(), movie_id.end(), ::isdigit)) {
+        error_msg("Id-ul filmului trebuie sa fie un numar");
+        return;
+    }
+
+    std::string request =
+        compute_delete_request(host,
+                               "/api/v1/tema/library/collections/" +
+                                   collection_id + "/movies/" + movie_id,
+                               {session_cookie}, jwt_token);
+
+    std::cout << request << std::endl;
+
+    send_request(sockfd, request);
+    std::string response = recv_response(sockfd, host);
+
+    std::cout << response << std::endl;
+
+    if (status_code(response, 200)) {
+        success_msg("Filmul a fost sters din colectie");
+    } else {
+        error_msg("Nu am putut sterge filmul din colectie");
     }
 }
 
@@ -720,11 +761,12 @@ int main() {
     // delete_movie(sockfd, host, user_session_cookie, jwt_token);
     // update_movie(sockfd, host, user_session_cookie, jwt_token);
     // get_collections(sockfd, host, user_session_cookie, jwt_token);
-    get_collection(sockfd, host, user_session_cookie, jwt_token);
+    // get_collection(sockfd, host, user_session_cookie, jwt_token);
     // TODO: needs to be tested
     // add_collection(sockfd, host, user_session_cookie, jwt_token);
     // delete_collection(sockfd, host, user_session_cookie, jwt_token);
-    // add_movie_to_collection(sockfd, host, user_session_cookie, jwt_token);
+    add_movie_to_collection(sockfd, host, user_session_cookie, jwt_token);
+    delete_movie_from_collection(sockfd, host, user_session_cookie, jwt_token);
     close_conn(sockfd);
     return 0;
 }
