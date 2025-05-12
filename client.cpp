@@ -21,7 +21,7 @@ void login_admin(int& sockfd, std::string host, std::string& session_cookie) {
     std::string request =
         compute_post_request(host, "/api/v1/tema/admin/login", body_data, {});
 
-    send_request(sockfd, request);
+    send_request(sockfd, host, request);
     std::string response = recv_response(sockfd, host);
 
     if (status_code(response, 200)) {
@@ -53,7 +53,7 @@ void DEBUG_login_admin(int& sockfd,
     std::string request =
         compute_post_request(host, "/api/v1/tema/admin/login", body_data, {});
 
-    send_request(sockfd, request);
+    send_request(sockfd, host, request);
     std::string response = recv_response(sockfd, host);
 
     if (status_code(response, 200)) {
@@ -85,7 +85,7 @@ void add_user(int& sockfd, std::string host, std::string session_cookie) {
     std::string request = compute_post_request(host, "/api/v1/tema/admin/users",
                                                body_data, {session_cookie});
 
-    send_request(sockfd, request);
+    send_request(sockfd, host, request);
     std::string response = recv_response(sockfd, host);
 
     // 201 = created
@@ -104,7 +104,7 @@ void get_users(int& sockfd, std::string host, std::string session_cookie) {
     std::string request = compute_get_request(host, "/api/v1/tema/admin/users",
                                               {}, {session_cookie});
 
-    send_request(sockfd, request);
+    send_request(sockfd, host, request);
     std::string response = recv_response(sockfd, host);
 
     if (status_code(response, 200)) {
@@ -129,7 +129,8 @@ void get_users(int& sockfd, std::string host, std::string session_cookie) {
         } catch (const std::exception& e) {
             error_msg("Nu am putut parsa raspunsul JSON");
 
-            std::cout << response << std::endl;  // TODO: REMOVE THIS !!! DEBUG
+            // std::cout << response << std::endl;  // TODO: REMOVE THIS !!!
+            // DEBUG
         }
     } else {
         error_msg("Nu am putut obtine userii");
@@ -143,12 +144,12 @@ void delete_user(int& sockfd, std::string host, std::string session_cookie) {
     std::string path = "/api/v1/tema/admin/users/" + username;
     std::string request = compute_delete_request(host, path, {session_cookie});
 
-    std::cout << request << std::endl;
+    // std::cout << request << std::endl;
 
-    send_request(sockfd, request);
+    send_request(sockfd, host, request);
     std::string response = recv_response(sockfd, host);
 
-    std::cout << response << std::endl;
+    // std::cout << response << std::endl;
 
     if (status_code(response, 200)) {
         success_msg("User sters cu succes");
@@ -165,12 +166,12 @@ void logout_admin(int& sockfd, std::string host, std::string& session_cookie) {
     std::string request = compute_get_request(host, "/api/v1/tema/admin/logout",
                                               {}, {session_cookie});
 
-    std::cout << request << std::endl;
+    // std::cout << request << std::endl;
 
-    send_request(sockfd, request);
+    send_request(sockfd, host, request);
     std::string response = recv_response(sockfd, host);
 
-    std::cout << response << std::endl;
+    // std::cout << response << std::endl;
 
     if (status_code(response, 200)) {
         session_cookie = "";  // clear the cookie
@@ -204,7 +205,7 @@ void login(int& sockfd, std::string host, std::string& session_cookie) {
     std::string request =
         compute_post_request(host, "/api/v1/tema/user/login", body_data, {});
 
-    send_request(sockfd, request);
+    send_request(sockfd, host, request);
     std::string response = recv_response(sockfd, host);
 
     if (status_code(response, 200)) {
@@ -231,7 +232,7 @@ void get_access(int& sockfd,
     std::string request = compute_get_request(
         host, "/api/v1/tema/library/access", {}, {session_cookie});
 
-    send_request(sockfd, request);
+    send_request(sockfd, host, request);
     std::string response = recv_response(sockfd, host);
 
     if (status_code(response, 200)) {
@@ -246,10 +247,10 @@ void get_access(int& sockfd,
             jwt_token = response_json["token"];
         } catch (const std::exception& e) {
             error_msg("Nu am putut obtine accesul (eroare parsare json)");
-            std::cout << e.what() << std::endl;
+            // std::cout << e.what() << std::endl;
 
-            std::cout << response
-                      << std::endl;  // TODO: REMOVE THIS !!! DEBUG ONLY
+            // std::cout << response
+            //           << std::endl;  // TODO: REMOVE THIS !!! DEBUG ONLY
         }
     } else {
         error_msg("Nu am putut obtine accesul");
@@ -263,7 +264,7 @@ void get_movies(int& sockfd,
     std::string request = compute_get_request(
         host, "/api/v1/tema/library/movies", {}, {session_cookie}, jwt_token);
 
-    send_request(sockfd, request);
+    send_request(sockfd, host, request);
     std::string response = recv_response(sockfd, host);
 
     if (status_code(response, 200)) {
@@ -307,7 +308,7 @@ void get_movie(int& sockfd,
         compute_get_request(host, "/api/v1/tema/library/movies/" + movie_id, {},
                             {session_cookie}, jwt_token);
 
-    send_request(sockfd, request);
+    send_request(sockfd, host, request);
 
     std::string response = recv_response(sockfd, host);
 
@@ -375,7 +376,7 @@ void add_movie(int& sockfd,
         compute_post_request(host, "/api/v1/tema/library/movies", body_data,
                              {session_cookie}, jwt_token);
 
-    send_request(sockfd, request);
+    send_request(sockfd, host, request);
     std::string response = recv_response(sockfd, host);
 
     if (status_code(response, 201)) {  // 201 = CREATED
@@ -403,7 +404,7 @@ void delete_movie(int& sockfd,
         compute_delete_request(host, "/api/v1/tema/library/movies/" + movie_id,
                                {session_cookie}, jwt_token);
 
-    send_request(sockfd, request);
+    send_request(sockfd, host, request);
     std::string response = recv_response(sockfd, host);
 
     if (status_code(response, 200)) {
@@ -467,7 +468,7 @@ void update_movie(int& sockfd,
         compute_put_request(host, "/api/v1/tema/library/movies/" + movie_id,
                             body_data, {session_cookie}, jwt_token);
 
-    send_request(sockfd, request);
+    send_request(sockfd, host, request);
     std::string response = recv_response(sockfd, host);
 
     if (status_code(response, 200)) {
@@ -487,12 +488,12 @@ void get_collections(int& sockfd,
         compute_get_request(host, "/api/v1/tema/library/collections", {},
                             {session_cookie}, jwt_token);
 
-    std::cout << request << std::endl;
+    // std::cout << request << std::endl;
 
-    send_request(sockfd, request);
+    send_request(sockfd, host, request);
     std::string response = recv_response(sockfd, host);
 
-    std::cout << response << std::endl;  // TODO: REMOVE THIS !!! DEBUG ONLY
+    // std::cout << response << std::endl;  // TODO: REMOVE THIS !!! DEBUG ONLY
 
     if (status_code(response, 200)) {
         success_msg("Colectiile au fost obtinute cu succes");
@@ -519,10 +520,10 @@ void get_collection(int& sockfd,
         host, "/api/v1/tema/library/collections/" + collection_id, {},
         {session_cookie}, jwt_token);
 
-    send_request(sockfd, request);
+    send_request(sockfd, host, request);
     std::string response = recv_response(sockfd, host);
 
-    std::cout << response << std::endl;  // TODO: REMOVE THIS !!! DEBUG ONLY
+    // std::cout << response << std::endl;  // TODO: REMOVE THIS !!! DEBUG ONLY
 
     if (status_code(response, 200)) {
         success_msg("Colectia a fost obtinuta cu succes");
@@ -534,28 +535,74 @@ void get_collection(int& sockfd,
 // add_collection -> primeste doar titlu, din care iau ID-ul colectiei
 // in functie de numarul de filme, apelez add_movie_to_collection
 
-// TODO: come back here
+void _add_collection_add_movie(int& sockfd,
+                               std::string host,
+                               std::string session_cookie,
+                               std::string jwt_token,
+                               std::string collection_id,
+                               std::string title,
+                               int movie_id) {
+    json body_data = {{"id", movie_id}, {"title", title}};
+
+    std::string request = compute_post_request(
+        host, "/api/v1/tema/library/collections/" + collection_id + "/movies",
+        body_data, {session_cookie}, jwt_token);
+
+    send_request(sockfd, host, request);
+
+    std::string response = recv_response(sockfd, host);
+
+    if (status_code(response, 200) || status_code(response, 201)) {
+        success_msg("Filmul a fost adaugat la colectie");
+    } else {
+        error_msg("Nu am putut adauga filmul la colectie");
+    }
+}
+
 void add_collection(int& sockfd,
                     std::string host,
                     std::string session_cookie,
                     std::string jwt_token) {
+    // Get and validate all input first
     std::string title;
     int num_movies;
     std::vector<int> movie_ids;
 
+    // Get title
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     std::cout << "title=";
     std::getline(std::cin, title);
+    if (title.empty()) {
+        error_msg("Titlul nu poate fi gol");
+        return;
+    }
 
+    // Get number of movies
     std::cout << "num_movies=";
-    std::cin >> num_movies;
+    std::string num_movies_str;
+    std::cin >> num_movies_str;
+    try {
+        num_movies = std::stoi(num_movies_str);
+        if (num_movies <= 0) {
+            error_msg("Numarul de filme trebuie sa fie pozitiv");
+            return;
+        }
+    } catch (const std::exception& e) {
+        error_msg("Numarul de filme trebuie sa fie un numar intreg");
+        return;
+    }
 
+    // Get all movie IDs
     for (int i = 0; i < num_movies; i++) {
         std::cout << "movie_id[" << i << "]=";
         std::string movie_id_str;
         std::cin >> movie_id_str;
         try {
             int movie_id = std::stoi(movie_id_str);
+            if (movie_id <= 0) {
+                error_msg("Id-ul filmului trebuie sa fie pozitiv");
+                return;
+            }
             movie_ids.push_back(movie_id);
         } catch (const std::exception& e) {
             error_msg("Id-ul filmului trebuie sa fie un numar");
@@ -563,43 +610,60 @@ void add_collection(int& sockfd,
         }
     }
 
-    json body_data = {
-        {"title", title}, {"num_movies", num_movies}, {"movie_ids", movie_ids}};
-
+    // Now that all input is validated, proceed with requests
+    // First create the collection with just the title
+    json body_data = {{"title", title}};
     std::string request =
         compute_post_request(host, "/api/v1/tema/library/collections",
                              body_data, {session_cookie}, jwt_token);
 
-    std::cout << request << std::endl;
-
-    send_request(sockfd, request);
+    send_request(sockfd, host, request);
     std::string response = recv_response(sockfd, host);
 
-    std::cout << response << std::endl;  // TODO: REMOVE THIS !!! DEBUG ONLY
-
-    if (status_code(response, 201)) {  // 201 = CREATED
-        success_msg("Colectie adaugata");
-
-        // Extract and display the response details
-        size_t body_start = response.find("\r\n\r\n") + 4;
-        std::string body = response.substr(body_start);
-
-        try {
-            json response_json = json::parse(body);
-            std::cout << "title: " << response_json["title"].get<std::string>()
-                      << std::endl;
-            std::cout << "owner: " << response_json["owner"].get<std::string>()
-                      << std::endl;
-
-            for (const auto& movie : response_json["movies"]) {
-                std::cout << "#" << movie["id"].get<int>() << ": "
-                          << movie["title"].get<std::string>() << std::endl;
-            }
-        } catch (const std::exception& e) {
-            error_msg("Nu am putut parsa raspunsul JSON");
-        }
-    } else {
+    if (!status_code(response, 201)) {  // 201 = CREATED
         error_msg("Nu am putut adauga colectia");
+        return;
+    }
+
+    // Extract collection ID from response
+    size_t body_start = response.find("\r\n\r\n") + 4;
+    std::string body = response.substr(body_start);
+    json response_json = json::parse(body);
+    std::string collection_id = std::to_string(response_json["id"].get<int>());
+
+    // Add all movies to collection
+    for (int movie_id : movie_ids) {
+        _add_collection_add_movie(sockfd, host, session_cookie, jwt_token,
+                                  collection_id, title, movie_id);
+    }
+
+    // If you got here everything went well
+    success_msg("Colectie adaugata cu succes");
+
+    // Get final collection details to display
+    std::string request_get = compute_get_request(
+        host, "/api/v1/tema/library/collections/" + collection_id, {},
+        {session_cookie}, jwt_token);
+
+    send_request(sockfd, host, request_get);
+    std::string response_get = recv_response(sockfd, host);
+
+    if (status_code(response_get, 200)) {
+        size_t body_start = response_get.find("\r\n\r\n") + 4;
+        std::string body = response_get.substr(body_start);
+        json collection_data = json::parse(body);
+
+        std::cout << "title: " << collection_data["title"].get<std::string>()
+                  << std::endl;
+        std::cout << "owner: " << collection_data["owner"].get<std::string>()
+                  << std::endl;
+
+        int count = 1;
+        for (const auto& movie : collection_data["movies"]) {
+            std::cout << "#" << count << ": "
+                      << movie["title"].get<std::string>() << std::endl;
+            count++;
+        }
     }
 }
 
@@ -620,7 +684,7 @@ void delete_collection(int& sockfd,
         host, "/api/v1/tema/library/collections/" + collection_id,
         {session_cookie}, jwt_token);
 
-    send_request(sockfd, request);
+    send_request(sockfd, host, request);
     std::string response = recv_response(sockfd, host);
 
     if (status_code(response, 200)) {
@@ -652,18 +716,18 @@ void add_movie_to_collection(int& sockfd,
         return;
     }
 
-    // grab the title of the collection
-
+    // Get collection details
     std::string request_get = compute_get_request(
         host, "/api/v1/tema/library/collections/" + collection_id, {},
         {session_cookie}, jwt_token);
-    send_request(sockfd, request_get);
 
-    std::cout << request_get << std::endl;
+    // std::cout << "GET Request:\n" << request_get << std::endl;
+
+    send_request(sockfd, host, request_get);
+    // std::cout << "GET Request sent successfully" << std::endl;
 
     std::string response_get = recv_response(sockfd, host);
-
-    std::cout << response_get << std::endl;
+    // std::cout << "GET Response received:\n" << response_get << std::endl;
 
     if (!status_code(response_get, 200)) {
         error_msg("Nu am putut obtine colectia cu id-ul " + collection_id +
@@ -681,12 +745,15 @@ void add_movie_to_collection(int& sockfd,
         host, "/api/v1/tema/library/collections/" + collection_id + "/movies",
         body_data, {session_cookie}, jwt_token);
 
-    send_request(sockfd, request);
+    // std::cout << "POST Request:\n" << request << std::endl;
+
+    send_request(sockfd, host, request);
+    // std::cout << "POST Request sent successfully" << std::endl;
+
     std::string response = recv_response(sockfd, host);
+    // std::cout << "POST Response received:\n" << response << std::endl;
 
-    // std::cout << response << std::endl;
-
-    if (status_code(response, 200)) {
+    if (status_code(response, 200) || status_code(response, 201)) {
         success_msg("Filmul a fost adaugat la colectie");
     } else {
         error_msg("Nu am putut adauga filmul la colectie");
@@ -721,17 +788,36 @@ void delete_movie_from_collection(int& sockfd,
                                    collection_id + "/movies/" + movie_id,
                                {session_cookie}, jwt_token);
 
-    std::cout << request << std::endl;
-
-    send_request(sockfd, request);
+    send_request(sockfd, host, request);
     std::string response = recv_response(sockfd, host);
-
-    std::cout << response << std::endl;
 
     if (status_code(response, 200)) {
         success_msg("Filmul a fost sters din colectie");
     } else {
         error_msg("Nu am putut sterge filmul din colectie");
+    }
+}
+
+// comanda exit
+void exit_client(int& sockfd) {
+    close_conn(sockfd);
+    exit(0);
+}
+
+void logout(int& sockfd,
+            std::string host,
+            std::string& session_cookie,
+            std::string& jwt_token) {
+    std::string request = compute_get_request(host, "/api/v1/tema/user/logout",
+                                              {}, {session_cookie}, jwt_token);
+
+    send_request(sockfd, host, request);
+    std::string response = recv_response(sockfd, host);
+
+    if (status_code(response, 200)) {
+        success_msg("Utilizatorul a fost delogat cu succes");
+    } else {
+        error_msg("Nu am putut deloga utilizatorul");
     }
 }
 
@@ -753,8 +839,8 @@ int main() {
     // get_users(sockfd, host, admin_session_cookie);
     // logout_admin(sockfd, host, admin_session_cookie);
 
-    login(sockfd, host, user_session_cookie);
-    get_access(sockfd, host, user_session_cookie, jwt_token);
+    // login(sockfd, host, user_session_cookie);
+    // get_access(sockfd, host, user_session_cookie, jwt_token);
     // add_movie(sockfd, host, user_session_cookie, jwt_token);
     // get_movies(sockfd, host, user_session_cookie, jwt_token);
     // get_movie(sockfd, host, user_session_cookie, jwt_token);
@@ -765,8 +851,62 @@ int main() {
     // TODO: needs to be tested
     // add_collection(sockfd, host, user_session_cookie, jwt_token);
     // delete_collection(sockfd, host, user_session_cookie, jwt_token);
-    add_movie_to_collection(sockfd, host, user_session_cookie, jwt_token);
-    delete_movie_from_collection(sockfd, host, user_session_cookie, jwt_token);
-    close_conn(sockfd);
+    // add_movie_to_collection(sockfd, host, user_session_cookie, jwt_token);
+    // delete_movie_from_collection(sockfd, host, user_session_cookie,
+    // jwt_token);
+    // logout(sockfd, host, user_session_cookie, jwt_token);
+    // close_conn(sockfd);
+
+    std::string command;
+
+    while (true) {
+        std::cin >> command;
+
+        if (command == "login_admin") {
+            login_admin(sockfd, host, admin_session_cookie);
+        } else if (command == "add_user") {
+            add_user(sockfd, host, admin_session_cookie);
+        } else if (command == "get_users") {
+            get_users(sockfd, host, admin_session_cookie);
+        } else if (command == "delete_user") {
+            delete_user(sockfd, host, admin_session_cookie);
+        } else if (command == "logout_admin") {
+            logout_admin(sockfd, host, admin_session_cookie);
+        } else if (command == "login") {
+            login(sockfd, host, user_session_cookie);
+        } else if (command == "get_access") {
+            get_access(sockfd, host, user_session_cookie, jwt_token);
+        } else if (command == "get_movies") {
+            get_movies(sockfd, host, user_session_cookie, jwt_token);
+        } else if (command == "get_movie") {
+            get_movie(sockfd, host, user_session_cookie, jwt_token);
+        } else if (command == "add_movie") {
+            add_movie(sockfd, host, user_session_cookie, jwt_token);
+        } else if (command == "delete_movie") {
+            delete_movie(sockfd, host, user_session_cookie, jwt_token);
+        } else if (command == "update_movie") {
+            update_movie(sockfd, host, user_session_cookie, jwt_token);
+        } else if (command == "get_collections") {
+            get_collections(sockfd, host, user_session_cookie, jwt_token);
+        } else if (command == "get_collection") {
+            get_collection(sockfd, host, user_session_cookie, jwt_token);
+        } else if (command == "add_collection") {
+            add_collection(sockfd, host, user_session_cookie, jwt_token);
+        } else if (command == "delete_collection") {
+            delete_collection(sockfd, host, user_session_cookie, jwt_token);
+        } else if (command == "add_movie_to_collection") {
+            add_movie_to_collection(sockfd, host, user_session_cookie,
+                                    jwt_token);
+        } else if (command == "delete_movie_from_collection") {
+            delete_movie_from_collection(sockfd, host, user_session_cookie,
+                                         jwt_token);
+        } else if (command == "logout") {
+            logout(sockfd, host, user_session_cookie, jwt_token);
+        } else if (command == "exit") {
+            exit_client(sockfd);
+        } else {
+            std::cout << "Comanda invalida\n";
+        }
+    }
     return 0;
 }

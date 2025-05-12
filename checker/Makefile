@@ -3,7 +3,7 @@
 VENV = .venv
 VENV_PYTHON3 = $(VENV)/bin/python3
 
-ADMIN ?= test:testpass
+ADMIN ?= stefan.gatej:930403745117
 PROGRAM ?= ../client
 
 all: venv deps

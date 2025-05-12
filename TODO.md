@@ -12,9 +12,9 @@
 - [x] update_movie - actualizeaza datele unui film
 - [x] get_collections - cere toate colecțiile de filme de pe server
 - [x] get_collection - cere informaţie despre o colecție de filme
-- [ ] add_collection - adaugă o colecție de filme
+- [x] add_collection - adaugă o colecție de filme
 - [x] delete_collection - șterge o colecție de filme
 - [x] add_movie_to_collection - adaugă un film intr-o colecție
-- [ ] delete_movie_from_collection - șterge un film dintr-o colecție
-- [ ] logout - efectueaza delogarea utilizatorului
-- [ ] exit - efectueaza ieșirea din program
+- [x] delete_movie_from_collection - șterge un film dintr-o colecție
+- [x] logout - efectueaza delogarea utilizatorului
+- [x] exit - efectueaza ieșirea din program
