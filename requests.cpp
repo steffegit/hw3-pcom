@@ -2,7 +2,7 @@
 #include <sstream>
 #include "nlohmann.hpp"
 
-using json = nlohmann::ordered_json;
+using json = nlohmann::json;
 
 std::string compute_get_request(const std::string& host,
                                 const std::string& path,

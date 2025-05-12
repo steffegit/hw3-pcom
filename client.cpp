@@ -7,7 +7,7 @@
 #include "nlohmann.hpp"
 #include "requests.h"
 
-using json = nlohmann::ordered_json;
+using json = nlohmann::json;
 
 std::unordered_map<int, std::pair<std::string, int>> movie_id_to_title_and_id;
 std::unordered_map<int, std::tuple<std::string, int, std::string>>
@@ -282,6 +282,9 @@ void get_movies(int& sockfd,
             json response_json = json::parse(body);
             std::cout << "SUCCESS: Lista filmelor" << std::endl;
 
+            // Clear the map before populating it
+            movie_id_to_title_and_id.clear();
+
             int count = 1;
             for (const auto& movie : response_json["movies"]) {
                 std::cout << "#" << count << " "
@@ -517,8 +520,10 @@ void get_collections(int& sockfd,
             json response_json = json::parse(body);
             std::cout << "SUCCESS: Lista colectiilor" << std::endl;
 
-            int count = 1;
+            // Clear the map before populating it
             collection_id_to_title_and_id_and_owner.clear();
+
+            int count = 1;
             for (const auto& collection : response_json["collections"]) {
                 std::string title = collection["title"].get<std::string>();
                 int id = collection["id"].get<int>();
