@@ -126,7 +126,7 @@ void get_users(int& sockfd, std::string host, std::string session_cookie) {
 
         try {
             json response_json = json::parse(body);
-            std::cout << "SUCCESS: Lista utilizatorilor" << std::endl;
+            success_msg("Lista utilizatorilor:");
 
             for (const auto& user : response_json["users"]) {
                 std::cout << "#" << user["id"].get<int>() << " "
@@ -674,9 +674,6 @@ void add_collection(int& sockfd,
         return;
     }
 
-    // If you got here everything went well
-    success_msg("Colectie adaugata cu succes");
-
     // Extract collection ID from response
     size_t body_start = response.find("\r\n\r\n") + 4;
     std::string body = response.substr(body_start);
@@ -689,29 +686,33 @@ void add_collection(int& sockfd,
                                   collection_id, title, movie_id);
     }
 
-    // Get final collection details to display
-    std::string request_get = compute_get_request(
-        host, "/api/v1/tema/library/collections/" + collection_id, {},
-        {session_cookie}, jwt_token);
+    // If you got here everything went well
+    success_msg("Colectie adaugata cu succes");
 
-    send_request(sockfd, host, request_get);
-    std::string response_get = recv_response(sockfd, host);
+    // FIXME: Removing this because it's not needed
+    // // Get final collection details to display
+    // std::string request_get = compute_get_request(
+    //     host, "/api/v1/tema/library/collections/" + collection_id, {},
+    //     {session_cookie}, jwt_token);
 
-    if (status_code(response_get, 200)) {
-        size_t body_start = response_get.find("\r\n\r\n") + 4;
-        std::string body = response_get.substr(body_start);
-        json collection_data = json::parse(body);
+    // send_request(sockfd, host, request_get);
+    // std::string response_get = recv_response(sockfd, host);
 
-        // std::cout << "title: " << collection_data["title"].get<std::string>()
-        //           << std::endl;
-        // std::cout << "owner: " << collection_data["owner"].get<std::string>()
-        //           << std::endl;
+    // if (status_code(response_get, 200)) {
+    //     size_t body_start = response_get.find("\r\n\r\n") + 4;
+    //     std::string body = response_get.substr(body_start);
+    //     json collection_data = json::parse(body);
 
-        // for (const auto& movie : collection_data["movies"]) {
-        //     std::cout << "#" << movie["id"].get<int>() << ": "
-        //               << movie["title"].get<std::string>() << std::endl;
-        // }
-    }
+    //     std::cout << "title: " << collection_data["title"].get<std::string>()
+    //               << std::endl;
+    //     std::cout << "owner: " << collection_data["owner"].get<std::string>()
+    //               << std::endl;
+
+    //     for (const auto& movie : collection_data["movies"]) {
+    //         std::cout << "#" << movie["id"].get<int>() << ": "
+    //                   << movie["title"].get<std::string>() << std::endl;
+    //     }
+    // }
 }
 
 void delete_collection(int& sockfd,
