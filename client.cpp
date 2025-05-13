@@ -674,6 +674,9 @@ void add_collection(int& sockfd,
         return;
     }
 
+    // If you got here everything went well
+    success_msg("Colectie adaugata cu succes");
+
     // Extract collection ID from response
     size_t body_start = response.find("\r\n\r\n") + 4;
     std::string body = response.substr(body_start);
@@ -699,19 +702,16 @@ void add_collection(int& sockfd,
         std::string body = response_get.substr(body_start);
         json collection_data = json::parse(body);
 
-        std::cout << "title: " << collection_data["title"].get<std::string>()
-                  << std::endl;
-        std::cout << "owner: " << collection_data["owner"].get<std::string>()
-                  << std::endl;
+        // std::cout << "title: " << collection_data["title"].get<std::string>()
+        //           << std::endl;
+        // std::cout << "owner: " << collection_data["owner"].get<std::string>()
+        //           << std::endl;
 
-        for (const auto& movie : collection_data["movies"]) {
-            std::cout << "#" << movie["id"].get<int>() << ": "
-                      << movie["title"].get<std::string>() << std::endl;
-        }
+        // for (const auto& movie : collection_data["movies"]) {
+        //     std::cout << "#" << movie["id"].get<int>() << ": "
+        //               << movie["title"].get<std::string>() << std::endl;
+        // }
     }
-
-    // If you got here everything went well
-    success_msg("Colectie adaugata cu succes");
 }
 
 void delete_collection(int& sockfd,
