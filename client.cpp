@@ -48,37 +48,39 @@ void login_admin(int& sockfd, std::string host, std::string& session_cookie) {
     }
 }
 
-void DEBUG_login_admin(int& sockfd,
-                       std::string host,
-                       std::string& session_cookie) {
-    std::string username, password;
-    username = "stefan.gatej";
-    password = "930403745117";
+// void DEBUG_login_admin(int& sockfd,
+//                        std::string host,
+//                        std::string& session_cookie) {
+//     std::string username, password;
+//     username = "stefan.gatej";
+//     password = "930403745117";
 
-    json body_data = {{"username", username}, {"password", password}};
+//     json body_data = {{"username", username}, {"password", password}};
 
-    std::string request =
-        compute_post_request(host, "/api/v1/tema/admin/login", body_data, {});
+//     std::string request =
+//         compute_post_request(host, "/api/v1/tema/admin/login", body_data,
+//         {});
 
-    send_request(sockfd, host, request);
-    std::string response = recv_response(sockfd, host);
+//     send_request(sockfd, host, request);
+//     std::string response = recv_response(sockfd, host);
 
-    if (status_code(response, 200)) {
-        success_msg("Admin autentificat cu succes");
-    } else {
-        error_msg("Nu am putut autentifica adminul");
-    }
+//     if (status_code(response, 200)) {
+//         success_msg("Admin autentificat cu succes");
+//     } else {
+//         error_msg("Nu am putut autentifica adminul");
+//     }
 
-    // session cookie
-    size_t cookie_start =
-        response.find("Set-Cookie: ") + 12;  // +12 to skip "Set-Cookie: "
-    size_t cookie_end = response.find(";", cookie_start);
-    session_cookie = response.substr(cookie_start, cookie_end - cookie_start);
+//     // session cookie
+//     size_t cookie_start =
+//         response.find("Set-Cookie: ") + 12;  // +12 to skip "Set-Cookie: "
+//     size_t cookie_end = response.find(";", cookie_start);
+//     session_cookie = response.substr(cookie_start, cookie_end -
+//     cookie_start);
 
-    if (session_cookie.empty()) {
-        error_msg("Nu am putut obtine cookie-ul");
-    }
-}
+//     if (session_cookie.empty()) {
+//         error_msg("Nu am putut obtine cookie-ul");
+//     }
+// }
 
 void add_user(int& sockfd, std::string host, std::string session_cookie) {
     std::string username, password;
@@ -133,9 +135,6 @@ void get_users(int& sockfd, std::string host, std::string session_cookie) {
             }
         } catch (const std::exception& e) {
             error_msg("Nu am putut parsa raspunsul JSON");
-
-            // std::cout << response << std::endl;  // TODO: REMOVE THIS !!!
-            // DEBUG
         }
     } else {
         error_msg("Nu am putut obtine userii");
@@ -255,10 +254,6 @@ void get_access(int& sockfd,
             jwt_token = response_json["token"];
         } catch (const std::exception& e) {
             error_msg("Nu am putut obtine accesul (eroare parsare json)");
-            // std::cout << e.what() << std::endl;
-
-            // std::cout << response
-            //           << std::endl;  // TODO: REMOVE THIS !!! DEBUG ONLY
         }
     } else {
         error_msg("Nu am putut obtine accesul");
@@ -887,7 +882,6 @@ int main() {
     int sockfd = open_conn(IP, PORT, AF_INET, SOCK_STREAM, 0);
     // login_admin(sockfd, host, session_cookie);
 
-    // TODO: REMOVE THIS
     // DEBUG_login_admin(sockfd, host, admin_session_cookie);
     // add_user(sockfd, host, admin_session_cookie);
     // get_users(sockfd, host, admin_session_cookie);
@@ -902,7 +896,6 @@ int main() {
     // update_movie(sockfd, host, user_session_cookie, jwt_token);
     // get_collections(sockfd, host, user_session_cookie, jwt_token);
     // get_collection(sockfd, host, user_session_cookie, jwt_token);
-    // TODO: needs to be tested
     // add_collection(sockfd, host, user_session_cookie, jwt_token);
     // delete_collection(sockfd, host, user_session_cookie, jwt_token);
     // add_movie_to_collection(sockfd, host, user_session_cookie, jwt_token);
