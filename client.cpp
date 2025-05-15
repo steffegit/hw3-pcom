@@ -89,6 +89,17 @@ void add_user(int& sockfd, std::string host, std::string session_cookie) {
     std::cout << "password=";
     std::cin >> password;
 
+    if (username.empty() || password.empty()) {
+        error_msg("Usernameul si parola nu pot fi nule");
+        return;
+    }
+
+    if (username.find(" ") != std::string::npos ||
+        password.find(" ") != std::string::npos) {
+        error_msg("Usernameul si/sau parola nu pot contine spatii");
+        return;
+    }
+
     json body_data = {{"username", username}, {"password", password}};
 
     std::string request = compute_post_request(host, "/api/v1/tema/admin/users",
@@ -158,9 +169,9 @@ void delete_user(int& sockfd, std::string host, std::string session_cookie) {
     if (status_code(response, 200)) {
         success_msg("User sters cu succes");
     } else if (status_code(response, 404)) {
-        success_msg("Userul nu exista (not found)");
+        error_msg("Userul nu exista (not found)");
     } else if (status_code(response, 401) || status_code(response, 403)) {
-        success_msg("Userul nu are permisiunea de a sterge");
+        error_msg("Userul nu are permisiunea de a sterge");
     } else {
         error_msg("Nu am putut sterge userul");
     }
@@ -652,6 +663,10 @@ void add_collection(int& sockfd,
                 error_msg("Id-ul filmului trebuie sa fie pozitiv");
                 return;
             }
+            if (movie_id_to_title.find(movie_id) == movie_id_to_title.end()) {
+                error_msg("Nu exista film cu id-ul " + movie_id_str);
+                return;
+            }
             movie_ids.push_back(movie_id);
         } catch (const std::exception& e) {
             error_msg("Id-ul filmului trebuie sa fie un numar");
@@ -747,7 +762,7 @@ void add_movie_to_collection(int& sockfd,
                              std::string session_cookie,
                              std::string jwt_token) {
     std::string collection_id;
-    std::cout << "id=";
+    std::cout << "collection_id=";
     std::cin >> collection_id;
 
     if (!std::all_of(collection_id.begin(), collection_id.end(), ::isdigit)) {
@@ -815,7 +830,7 @@ void delete_movie_from_collection(int& sockfd,
                                   std::string session_cookie,
                                   std::string jwt_token) {
     std::string collection_id;
-    std::cout << "id=";
+    std::cout << "collection_id=";
     std::cin >> collection_id;
 
     if (!std::all_of(collection_id.begin(), collection_id.end(), ::isdigit)) {
