@@ -30,6 +30,33 @@ This project implements a C++ client for interacting with a movie library server
 
 The client uses low-level socket programming to connect to the server, send HTTP requests, and receive responses. Helper functions are used to construct HTTP requests for different methods (GET, POST, PUT, DELETE) and to parse the server's responses.
 
+### HTTP Request Construction
+
+The client implements a set of overloaded functions for constructing different types of HTTP requests. These functions handle the details of formatting HTTP headers, including cookies and authorization tokens, and serializing JSON data for request bodies.
+
+#### Function Overloading Strategy
+
+The request builder functions are overloaded to handle different authentication scenarios:
+
+1. **Basic Authentication**: The base versions of these functions accept cookies for session-based authentication, used primarily for admin operations.
+2. **JWT Authentication**: The overloaded versions include an additional `jwt_token` parameter for token-based authentication, used for authorized user operations.
+
+This overloading approach provides several benefits:
+
+- **Separation of Concerns**: Clearly distinguishes between different authentication methods
+- **Code Reusability**: Avoids duplication while maintaining specialized behavior
+- **API Clarity**: Makes the authentication requirements explicit at the call site
+- **Flexibility**: Allows for easy extension to support additional authentication methods
+The implementation could be enhanced by extracting shared functionality into common utility methods, reducing duplication between the overloaded functions.
+
+These functions handle all the details of constructing properly formatted HTTP/1.1 requests, including:
+- Setting appropriate Content-Type headers
+- Adding Authorization headers for JWT tokens
+- Including Cookie headers for session management
+- Calculating Content-Length for request bodies
+- Using Connection: keep-alive for persistent connections
+- Formatting the request according to HTTP/1.1 specifications
+
 ### Command Loop
 
 The main function runs a command loop, reading commands from standard input and dispatching them to the appropriate handler functions. The following commands are supported:
