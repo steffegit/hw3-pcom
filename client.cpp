@@ -20,9 +20,20 @@ void login_admin(int& sockfd, std::string host, std::string& session_cookie) {
     std::string username, password;
     std::cout << "username=";
     std::cin >> username;
+
     std::cout << "password=";
     std::cin >> password;
 
+    if (username.empty() || password.empty()) {
+        error_msg("Usernameul si parola nu pot fi nule");
+        return;
+    }
+
+    if (username.find(" ") != std::string::npos ||
+        password.find(" ") != std::string::npos) {
+        error_msg("Usernameul si/sau parola nu pot contine spatii");
+        return;
+    }
     json body_data = {{"username", username}, {"password", password}};
 
     std::string request =
@@ -156,6 +167,17 @@ void delete_user(int& sockfd, std::string host, std::string session_cookie) {
     std::string username;
     std::cout << "username=";
     std::cin >> username;
+
+    if (username.empty()) {
+        error_msg("Usernameul nu poate fi gol");
+        return;
+    }
+
+    if (username.find(" ") != std::string::npos) {
+        error_msg("Usernameul nu poate contine spatii");
+        return;
+    }
+
     std::string path = "/api/v1/tema/admin/users/" + username;
     std::string request = compute_delete_request(host, path, {session_cookie});
 
@@ -215,6 +237,18 @@ void login(int& sockfd, std::string host, std::string& session_cookie) {
     std::cin >> username;
     std::cout << "password=";
     std::cin >> password;
+
+    if (admin_username.empty() || username.empty() || password.empty()) {
+        error_msg("Usernameul si parola nu pot fi nule");
+        return;
+    }
+
+    if (admin_username.find(" ") != std::string::npos ||
+        username.find(" ") != std::string::npos ||
+        password.find(" ") != std::string::npos) {
+        error_msg("Usernameul si/sau parola nu pot contine spatii");
+        return;
+    }
 
     json body_data = {{"admin_username", admin_username},
                       {"username", username},
