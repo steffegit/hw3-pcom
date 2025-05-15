@@ -1,12 +1,4 @@
-#include <sys/socket.h>
-// #include <charconv> -- maybe use this instead of stoi
-#include <iostream>
-#include <limits>
-#include <map>
-#include <string>
-#include "helpers.h"
-#include "nlohmann.hpp"
-#include "requests.h"
+#include "client.h"
 
 using json = nlohmann::json;
 
