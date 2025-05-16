@@ -28,7 +28,7 @@ This project implements a C++ client for interacting with a movie library server
 
 ### HTTP Communication
 
-The client uses low-level socket programming to connect to the server, send HTTP requests, and receive responses. Helper functions are used to construct HTTP requests for different methods (GET, POST, PUT, DELETE) and to parse the server's responses.
+The client uses low-level socket programming to connect to the server, send HTTP requests, and receive responses. Helper functions are used to construct HTTP requests for different methods **(GET, POST, PUT, DELETE)** and to parse the server's responses.
 
 ### HTTP Request Construction
 
@@ -40,14 +40,6 @@ The request builder functions are overloaded to handle different authentication 
 
 1. **Basic Authentication**: The base versions of these functions accept cookies for session-based authentication, used primarily for admin operations.
 2. **JWT Authentication**: The overloaded versions include an additional `jwt_token` parameter for token-based authentication, used for authorized user operations.
-
-This overloading approach provides several benefits:
-
-- **Separation of Concerns**: Clearly distinguishes between different authentication methods
-- **Code Reusability**: Avoids duplication while maintaining specialized behavior
-- **API Clarity**: Makes the authentication requirements explicit at the call site
-- **Flexibility**: Allows for easy extension to support additional authentication methods
-The implementation could be enhanced by extracting shared functionality into common utility methods, reducing duplication between the overloaded functions.
 
 These functions handle all the details of constructing properly formatted HTTP/1.1 requests, including:
 - Setting appropriate Content-Type headers
@@ -62,34 +54,34 @@ These functions handle all the details of constructing properly formatted HTTP/1
 The main function runs a command loop, reading commands from standard input and dispatching them to the appropriate handler functions. The following commands are supported:
 
 1. Admin Commands
-   a. login_admin - authenticate as admin
-   b. add_user - add a new regular user
-   c. get_users - get all users from server
-   d. delete_user - delete a regular user
-   e. logout_admin - logout admin session
+   - **login_admin** - authenticate as admin
+   - **add_user** - add a new regular user
+   - **get_users** - get all users from server
+   - **delete_user** - delete a regular user
+   - **logout_admin** - logout admin session
 
 2. User Authentication Commands
-   a. login - authenticate as regular user
-   b. get_access - request access to movie collection
-   c. logout - logout user session
+   - **login** - authenticate as regular user
+   - **get_access** - request access to movie collection
+   - **logout** - logout user session
 
 3. Movie Management Commands
-   a. get_movies - get all movies from server
-   b. get_movie - get information about a specific movie
-   c. add_movie - add a new movie
-   d. delete_movie - delete a movie
-   e. update_movie - update movie details
+   - **get_movies** - get all movies from server
+   - **get_movie** - get information about a specific movie
+   - **add_movie** - add a new movie
+   - **delete_movie** - delete a movie
+   - **update_movie** - update movie details
 
 4. Collection Management Commands
-   a. get_collections - get all movie collections from server
-   b. get_collection - get information about a specific collection
-   c. add_collection - add a new movie collection
-   d. delete_collection - delete a movie collection
-   e. add_movie_to_collection - add a movie to a collection
-   f. delete_movie_from_collection - remove a movie from a collection
+   - **get_collections** - get all movie collections from server
+   - **get_collection** - get information about a specific collection
+   - **add_collection** - add a new movie collection
+   - **delete_collection** - delete a movie collection
+   - **add_movie_to_collection** - add a movie to a collection
+   - **delete_movie_from_collection** - remove a movie from a collection
 
 5. System Commands
-   a. exit - exit the program
+   - **exit** - exit the program
 
 ### Input Validation
 
@@ -102,7 +94,7 @@ All user input is validated before sending requests to the server. For example, 
 For JSON parsing and serialization, we use the [nlohmann/json](https://github.com/nlohmann/json) library. This library was chosen for several reasons:
 
 - **Ease of Use:** The syntax is intuitive and similar to working with standard C++ containers. For example, JSON objects can be constructed and accessed using familiar `[]` operators.
-- **Header-only:** The library is header-only, which simplifies integration and avoids additional build dependencies.
+- **Header-only:** The library is header-only, which simplifies integration and avoids additional build dependencies. (especially as I had to add it to the source code).
 - **Performance:** It provides efficient parsing and serialization, suitable for real-time client-server communication.
 - **Community Support:** nlohmann/json is one of the most popular and well-maintained C++ JSON libraries, with extensive documentation and community support.
 
@@ -136,13 +128,15 @@ for (const auto& movie : response_json["movies"]) {
 
 ### Error Handling
 
-The client provides clear error messages for invalid input, failed requests, and server errors. All network and parsing operations are wrapped in try-catch blocks where appropriate to ensure robustness.
+The client provides clear error messages for invalid input, failed requests, and server errors. All network and parsing operations are wrapped in try-catch blocks where appropriate to ensure reliability.
 
 The error handling could be enhanced by implementing specific handling for all possible server error codes, enabling more detailed and informative error messages.
 
 ## How to Run
 
-The project includes the `nlohmann/json` library in its source files, so no additional installation steps are required. To build and run the client:
+The project includes the `nlohmann/json` library in its source files, so no additional installation steps are required. 
+
+To build and run the client:
 ```sh
 make
 ./client

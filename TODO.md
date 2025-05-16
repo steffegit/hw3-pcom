@@ -20,3 +20,5 @@
 - [x] exit - efectueaza ieșirea din program
 test_1747035318_xthl5W
 b1b742ed84fc221bd984
+
+in loc sa verific daca id-ul este in map-ul ala, trebuie sa fac un request
