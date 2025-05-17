@@ -639,10 +639,19 @@ void add_collection(int& sockfd,
                 error_msg("Id-ul filmului trebuie sa fie pozitiv");
                 return;
             }
-            if (movie_id_to_title.find(movie_id) == movie_id_to_title.end()) {
-                error_msg("Nu exista film cu id-ul " + movie_id_str);
+
+            // in case get_movies is not called before, check if movie exists
+            // by making a get request to /api/v1/tema/library/movies/movie_id
+            std::string request = compute_get_request(
+                host, "/api/v1/tema/library/movies/" + movie_id_str, {},
+                {session_cookie}, jwt_token);
+            send_request(sockfd, host, request);
+            std::string response = recv_response(sockfd, host);
+            if (!status_code(response, 200)) {
+                error_msg("Filmul cu id-ul " + movie_id_str + " nu exista");
                 return;
             }
+
             movie_ids.push_back(movie_id);
         } catch (const std::exception& e) {
             error_msg("Id-ul filmului trebuie sa fie un numar");
